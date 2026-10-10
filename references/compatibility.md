@@ -24,6 +24,8 @@ The scripts download the pinned PlantUML and Structurizr versions into `tools/bi
 
 The standard gallery is rendered from `examples/shop/` into `examples/shop/rendered/`. Run `npm ci` before bootstrap on a clean checkout.
 
+The `Cross-platform render` GitHub Actions workflow runs the gallery on Ubuntu, macOS, and Windows. The existing `Validate diagrams / render` check remains the fast Linux validation used by branch protection.
+
 ## Agent hosts
 
 | Host | Entry point | Notes |
