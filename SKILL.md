@@ -7,6 +7,8 @@ description: 用 Mermaid、PlantUML、Structurizr DSL、D2、Graphviz DOT 和 dr
 
 用“先澄清模型，再选择最合适的 DSL，生成可审阅源码，最后渲染和验证”的流程绘制软件工程图。默认保留图表源码；图片只是可再生成的产物。
 
+宿主安装和平台差异请按需阅读 [references/compatibility.md](references/compatibility.md)。`SKILL.md` 是跨模型的核心工作流；`agents/openai.yaml`、`CLAUDE.md` 和 `AGENTS.md` 只是不同宿主的入口或元数据，不要复制出多份独立工作流。
+
 ## 工作流
 
 1. **识别图的目的和受众**

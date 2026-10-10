@@ -66,6 +66,8 @@ Copy-Item -Recurse . "$env:CODEX_HOME\skills\software-diagrams"
 
 If `CODEX_HOME` is not set, use `%USERPROFILE%\.codex\skills\software-diagrams` on Windows or `~/.codex/skills/software-diagrams` on macOS/Linux.
 
+The core workflow is provider-neutral. Codex uses [`agents/openai.yaml`](agents/openai.yaml) for UI metadata; Claude Code can use [`CLAUDE.md`](CLAUDE.md), and OpenCode/DeepSeek Harness can use [`AGENTS.md`](AGENTS.md) or their documented skill directories. See [platform and agent compatibility](references/compatibility.md) for the complete matrix.
+
 ## Example gallery
 
 Open [examples/shop/README.md](examples/shop/README.md) for the source files, rendered SVG/PNG outputs, and Markdown/LaTeX embedding snippets.
