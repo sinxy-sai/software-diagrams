@@ -94,6 +94,6 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The release workflow installs the pinned toolchain, rerenders the gallery, packages the tracked repository contents, generates SHA-256 checksums, and publishes a GitHub Release with generated notes.
+The release workflow installs the pinned toolchain, rerenders the gallery, packages the rendered checkout without local dependencies or downloaded binaries, generates SHA-256 checksums, and publishes a GitHub Release with generated notes.
 
 Dependabot is configured for monthly npm and GitHub Actions updates. Review renderer changes by rerunning the gallery before merging dependency updates.

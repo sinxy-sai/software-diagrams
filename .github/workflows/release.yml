@@ -42,8 +42,10 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          git archive --format=tar.gz --prefix="software-diagrams-${TAG}/" \
-            --output="software-diagrams-${TAG}.tar.gz" HEAD
+          tar --exclude='./.git' \
+            --exclude='./node_modules' \
+            --exclude='./tools/bin' \
+            -czf "software-diagrams-${TAG}.tar.gz" .
           sha256sum "software-diagrams-${TAG}.tar.gz" > SHA256SUMS
 
       - name: Create GitHub release
