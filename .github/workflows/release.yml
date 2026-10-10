@@ -38,20 +38,36 @@ jobs:
       - name: Render the example gallery
         run: npm run render:unix
 
-      - name: Package the tagged repository
+      - name: Determine release channel
+        id: release_meta
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          tar --exclude='./.git' \
-            --exclude='./node_modules' \
-            --exclude='./tools/bin' \
-            -czf "software-diagrams-${TAG}.tar.gz" .
-          sha256sum "software-diagrams-${TAG}.tar.gz" > SHA256SUMS
+          if [[ "$TAG" == *-* ]]; then
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package the skill
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          package_dir="dist/software-diagrams-${TAG}"
+          mkdir -p "$package_dir"
+          cp SKILL.md README.md LICENSE AGENTS.md CLAUDE.md "$package_dir/"
+          cp -R agents references "$package_dir/"
+          tar -czf "software-diagrams-${TAG}-skill.tar.gz" -C dist "software-diagrams-${TAG}"
+          sha256sum "software-diagrams-${TAG}-skill.tar.gz" > SHA256SUMS
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
+          name: ${{ github.ref_name }}
+          body_path: .github/RELEASE_TEMPLATE.md
           generate_release_notes: true
+          prerelease: false
+          make_latest: ${{ steps.release_meta.outputs.make_latest }}
           files: |
-            software-diagrams-${{ github.ref_name }}.tar.gz
+            software-diagrams-${{ github.ref_name }}-skill.tar.gz
             SHA256SUMS

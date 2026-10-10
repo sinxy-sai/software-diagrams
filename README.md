@@ -68,6 +68,18 @@ If `CODEX_HOME` is not set, use `%USERPROFILE%\.codex\skills\software-diagrams` 
 
 The core workflow is provider-neutral. Codex uses [`agents/openai.yaml`](agents/openai.yaml) for UI metadata; Claude Code can use [`CLAUDE.md`](CLAUDE.md), and OpenCode/DeepSeek Harness can use [`AGENTS.md`](AGENTS.md) or their documented skill directories. See [platform and agent compatibility](references/compatibility.md) for the complete matrix.
 
+### Install with the skills CLI
+
+The public repository is directly installable from the skills ecosystem. The CLI has no separate publish command; a public GitHub repository with a root `SKILL.md` is the package source.
+
+```bash
+npx skills add sinxy-sai/software-diagrams
+bunx skills add sinxy-sai/software-diagrams
+pnpm dlx skills add sinxy-sai/software-diagrams
+```
+
+Use `--agent` or `--all` when you want to select the target agent directories. Release assets contain a smaller standalone skill package; the repository tag archive contains the complete examples and renderer tooling.
+
 ## Example gallery
 
 Open [examples/shop/README.md](examples/shop/README.md) for the source files, rendered SVG/PNG outputs, and Markdown/LaTeX embedding snippets.
