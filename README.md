@@ -13,6 +13,32 @@ Create software engineering diagrams as code with Mermaid, PlantUML, Structurizr
 
 ## Install
 
+### Install the skill with the skills CLI
+
+For agent use, install the published repository directly:
+
+```bash
+npx skills add sinxy-sai/software-diagrams
+bunx skills add sinxy-sai/software-diagrams
+pnpm dlx skills add sinxy-sai/software-diagrams
+```
+
+Use `--agent` to select an agent or `--all` to install for every supported agent. The CLI reads the root `SKILL.md`; it does not require the renderer dependencies in this repository.
+
+### Host-specific entrypoints
+
+The workflow is provider-neutral:
+
+- Codex uses [`agents/openai.yaml`](agents/openai.yaml) for UI metadata.
+- Claude Code can use [`CLAUDE.md`](CLAUDE.md).
+- OpenCode and DeepSeek Harness can use [`AGENTS.md`](AGENTS.md) or their documented skill directories.
+
+See [platform and agent compatibility](references/compatibility.md) for the complete matrix.
+
+### Clone the repository for local rendering
+
+Clone the repository when you need the examples, pinned renderers, or one-command gallery validation.
+
 ### Prerequisites
 
 - Node.js 20 or newer (Node 22 is recommended).
@@ -56,7 +82,7 @@ Outputs are written to `examples/shop/rendered/`. The command validates Structur
 
 ## Use the skill
 
-Copy this repository's skill folder into your Codex skills directory, or install the repository as a local skill according to your agent host's skill mechanism. The skill entrypoint is [SKILL.md](SKILL.md).
+The skill entrypoint is [SKILL.md](SKILL.md). If you are working from a local clone and want a direct Codex install, copy the repository's skill folder into the Codex skills directory:
 
 For a direct local install in Codex:
 
@@ -66,19 +92,7 @@ Copy-Item -Recurse . "$env:CODEX_HOME\skills\software-diagrams"
 
 If `CODEX_HOME` is not set, use `%USERPROFILE%\.codex\skills\software-diagrams` on Windows or `~/.codex/skills/software-diagrams` on macOS/Linux.
 
-The core workflow is provider-neutral. Codex uses [`agents/openai.yaml`](agents/openai.yaml) for UI metadata; Claude Code can use [`CLAUDE.md`](CLAUDE.md), and OpenCode/DeepSeek Harness can use [`AGENTS.md`](AGENTS.md) or their documented skill directories. See [platform and agent compatibility](references/compatibility.md) for the complete matrix.
-
-### Install with the skills CLI
-
-The public repository is directly installable from the skills ecosystem. The CLI has no separate publish command; a public GitHub repository with a root `SKILL.md` is the package source.
-
-```bash
-npx skills add sinxy-sai/software-diagrams
-bunx skills add sinxy-sai/software-diagrams
-pnpm dlx skills add sinxy-sai/software-diagrams
-```
-
-Use `--agent` or `--all` when you want to select the target agent directories. Release assets contain a smaller standalone skill package; the repository tag archive contains the complete examples and renderer tooling.
+Release assets contain a smaller standalone skill package; the repository tag archive contains the complete examples and renderer tooling.
 
 ## Example gallery
 
