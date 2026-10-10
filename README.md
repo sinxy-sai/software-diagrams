@@ -92,7 +92,7 @@ Copy-Item -Recurse . "$env:CODEX_HOME\skills\software-diagrams"
 
 If `CODEX_HOME` is not set, use `%USERPROFILE%\.codex\skills\software-diagrams` on Windows or `~/.codex/skills/software-diagrams` on macOS/Linux.
 
-Release assets contain a smaller standalone skill package; the repository tag archive contains the complete examples and renderer tooling.
+Release assets contain a smaller standalone `software-diagrams-<tag>.tar.gz` skill package; the repository tag archive contains the complete examples and renderer tooling.
 
 ## Example gallery
 

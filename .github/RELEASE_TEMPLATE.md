@@ -10,8 +10,4 @@ pnpm dlx skills add sinxy-sai/software-diagrams
 
 ## Included artifact
 
-This release includes the `software-diagrams-<tag>-skill.tar.gz` skill package. It contains the provider-neutral `SKILL.md`, host entrypoints, references, and license. The full source tree and examples remain available from the GitHub tag archive.
-
-## Changes
-
-GitHub-generated release notes follow this section.
+This release includes the `software-diagrams-<tag>.tar.gz` skill package. It contains the provider-neutral `SKILL.md`, host entrypoints, references, and license. The full source tree and examples remain available from the GitHub tag archive.

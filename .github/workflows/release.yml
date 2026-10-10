@@ -49,6 +49,42 @@ jobs:
             echo "make_latest=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          current_commit="$(git rev-list -n 1 "$TAG")"
+          previous_tag="$(git describe --tags --abbrev=0 "${current_commit}^" 2>/dev/null || true)"
+          generate_args=(
+            --method POST
+            "repos/${REPOSITORY}/releases/generate-notes"
+            -f "tag_name=${TAG}"
+            -f "target_commitish=${current_commit}"
+          )
+          if [[ -n "$previous_tag" ]]; then
+            generate_args+=(-f "previous_tag_name=${previous_tag}")
+          fi
+          gh api "${generate_args[@]}" --jq '.body' > generated-release-notes.md
+
+          sed "s/<tag>/${TAG}/g" .github/RELEASE_TEMPLATE.md > release-notes.md
+          {
+            echo
+            sed '/^\*\*Full Changelog\*\*:/d' generated-release-notes.md
+            echo
+            echo "## Full changelog"
+            if [[ -n "$previous_tag" ]]; then
+              echo "Changes since [${previous_tag}](https://github.com/${REPOSITORY}/compare/${previous_tag}...${TAG}):"
+              range="${previous_tag}..${TAG}"
+            else
+              echo "Changes included in [${TAG}](https://github.com/${REPOSITORY}/commits/${TAG}):"
+              range="$TAG"
+            fi
+            git log --first-parent --reverse --format='- [`%h`](https://github.com/'"${REPOSITORY}"'/commit/%H) %s' "$range"
+          } >> release-notes.md
+
       - name: Package the skill
         env:
           TAG: ${{ github.ref_name }}
@@ -57,17 +93,17 @@ jobs:
           mkdir -p "$package_dir"
           cp SKILL.md README.md LICENSE AGENTS.md CLAUDE.md "$package_dir/"
           cp -R agents references "$package_dir/"
-          tar -czf "software-diagrams-${TAG}-skill.tar.gz" -C dist "software-diagrams-${TAG}"
-          sha256sum "software-diagrams-${TAG}-skill.tar.gz" > SHA256SUMS
+          tar -czf "software-diagrams-${TAG}.tar.gz" -C dist "software-diagrams-${TAG}"
+          sha256sum "software-diagrams-${TAG}.tar.gz" > SHA256SUMS
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
-          body_path: .github/RELEASE_TEMPLATE.md
-          generate_release_notes: true
+          body_path: release-notes.md
+          generate_release_notes: false
           prerelease: false
           make_latest: ${{ steps.release_meta.outputs.make_latest }}
           files: |
-            software-diagrams-${{ github.ref_name }}-skill.tar.gz
+            software-diagrams-${{ github.ref_name }}.tar.gz
             SHA256SUMS
