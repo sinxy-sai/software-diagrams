@@ -21,17 +21,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            shell: bash
-            bootstrap: bash scripts/bootstrap.sh
-            render: npm run render:unix
           - os: macos-latest
-            shell: bash
-            bootstrap: bash scripts/bootstrap.sh
-            render: npm run render:unix
           - os: windows-latest
-            shell: pwsh
-            bootstrap: pwsh -NoProfile -File scripts/bootstrap.ps1
-            render: npm run render
 
     steps:
       - name: Check out source
@@ -52,10 +43,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install pinned renderers
-        shell: ${{ matrix.shell }}
-        run: ${{ matrix.bootstrap }}
+      - name: Install pinned renderers (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: bash scripts/bootstrap.sh
 
-      - name: Render example gallery
-        shell: ${{ matrix.shell }}
-        run: ${{ matrix.render }}
+      - name: Install pinned renderers (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/bootstrap.ps1
+
+      - name: Render example gallery (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: npm run render:unix
+
+      - name: Render example gallery (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: npm run render
