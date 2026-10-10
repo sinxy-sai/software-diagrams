@@ -1,0 +1,86 @@
+# Software diagrams skill
+
+Create software engineering diagrams as code with Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, and draw.io XML. The repository contains the reusable Codex skill, pinned rendering helpers, editable examples, and documentation for embedding diagrams in Markdown, LaTeX, and office/design tools.
+
+## What is included
+
+- `SKILL.md` — the Codex skill entrypoint and tool-selection workflow.
+- `agents/openai.yaml` — optional Codex UI metadata.
+- `references/` — renderer setup, output conventions, and troubleshooting.
+- `scripts/` — reproducible setup and one-command rendering helpers.
+- `examples/shop/` — a complete multi-format example with editable sources and generated outputs.
+- `package.json` / `package-lock.json` — pinned Node dependencies for WASM Graphviz, D2, draw.io headless, and Mermaid CLI.
+
+## Install
+
+### Prerequisites
+
+- Node.js 20 or newer (Node 22 is recommended).
+- Java 17 or newer for PlantUML and Structurizr CLI.
+- PowerShell 7 on Windows, or Bash plus `curl`/`unzip` on macOS/Linux.
+
+### Clone and install dependencies
+
+```bash
+git clone <your-repository-url> software-diagrams
+cd software-diagrams
+npm ci
+```
+
+Download the pinned Java tools:
+
+```powershell
+pwsh ./scripts/bootstrap.ps1
+```
+
+On macOS/Linux:
+
+```bash
+bash ./scripts/bootstrap.sh
+```
+
+The bootstrap scripts put PlantUML and Structurizr under `tools/bin/`. They are intentionally not committed to Git; versions and official download URLs are pinned in the scripts.
+They also rebuild the draw.io native helper if npm skipped its postinstall script.
+
+## Render the example gallery
+
+```powershell
+pwsh ./scripts/render-all.ps1
+```
+
+```bash
+bash ./scripts/render-all.sh
+```
+
+Outputs are written to `examples/shop/rendered/`. The command validates Structurizr, renders Mermaid/PlantUML/D2/Graphviz/draw.io, and exits non-zero if a renderer fails.
+
+## Use the skill
+
+Copy this repository's skill folder into your Codex skills directory, or install the repository as a local skill according to your agent host's skill mechanism. The skill entrypoint is [SKILL.md](SKILL.md).
+
+For a direct local install in Codex:
+
+```powershell
+Copy-Item -Recurse . "$env:CODEX_HOME\skills\software-diagrams"
+```
+
+If `CODEX_HOME` is not set, use `%USERPROFILE%\.codex\skills\software-diagrams` on Windows or `~/.codex/skills/software-diagrams` on macOS/Linux.
+
+## Example gallery
+
+Open [examples/shop/README.md](examples/shop/README.md) for the source files, rendered SVG/PNG outputs, and Markdown/LaTeX embedding snippets.
+
+## Design goals
+
+1. Keep diagram sources editable and reviewable.
+2. Keep generated images reproducible from a clean checkout.
+3. Choose the DSL that best matches the diagram's semantics.
+4. Make outputs usable in Markdown, LaTeX, diagrams.net, Figma, Inkscape, Word, and PowerPoint.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please include source changes, rerender affected examples, and document any new runtime dependency or licensing constraint.

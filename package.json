@@ -1,0 +1,21 @@
+{
+  "name": "software-diagrams",
+  "version": "0.1.0",
+  "description": "Reproducible renderers and examples for the software-diagrams skill",
+  "main": "index.js",
+  "scripts": {
+    "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
+    "render:unix": "bash scripts/render-all.sh",
+    "render:wasm": "node scripts/render-wasm.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@hpcc-js/wasm-graphviz": "^1.29.2",
+    "@terrastruct/d2": "^0.1.33",
+    "drawio-headless": "^0.4.2",
+    "@mermaid-js/mermaid-cli": "^12.0.0"
+  }
+}

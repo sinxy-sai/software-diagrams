@@ -1,0 +1,7 @@
+interface:
+  display_name: "Software diagrams"
+  short_description: "Create and render diagrams as code"
+  default_prompt: "Use $software-diagrams to create, render, and embed a software engineering diagram from editable source."
+
+policy:
+  allow_implicit_invocation: true
