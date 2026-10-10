@@ -27,6 +27,8 @@ Structurizr's `theme default` can fetch `https://static.structurizr.com/themes/d
 
 Avoid using an unpinned `npx --yes` command in CI. The repository pins Mermaid CLI in `package.json`; use the local binary through `npm exec -- mmdc` or `npx --no-install mmdc` after `npm ci`. An npx-only invocation stores packages in the user's npm cache and is not a stable project installation.
 
+On GitHub-hosted Linux runners, Chromium may fail with `No usable sandbox` when Mermaid CLI launches Puppeteer. The repository's CI scripts pass `scripts/puppeteer-ci.json`, which adds `--no-sandbox` and `--disable-setuid-sandbox` for the isolated CI runner. Do not make those flags the default for local browsing or untrusted multi-tenant environments.
+
 ## draw.io source and output
 
 `.drawio` and `.xml` files are editable source, not image files. Keep them under version control. Use draw.io Desktop, diagrams.net, or `drawio-headless` to produce SVG/PNG. Review the exported image once because XML can contain valid geometry that is still visually awkward.

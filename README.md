@@ -84,3 +84,16 @@ MIT. See [LICENSE](LICENSE).
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Please include source changes, rerender affected examples, and document any new runtime dependency or licensing constraint.
+
+## Releases
+
+Create and push a semantic version tag such as `v0.1.0`:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow installs the pinned toolchain, rerenders the gallery, packages the tracked repository contents, generates SHA-256 checksums, and publishes a GitHub Release with generated notes.
+
+Dependabot is configured for monthly npm and GitHub Actions updates. Review renderer changes by rerunning the gallery before merging dependency updates.

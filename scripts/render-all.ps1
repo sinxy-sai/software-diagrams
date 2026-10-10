@@ -8,6 +8,7 @@ $bin = Join-Path $repoRoot 'tools/bin'
 $structurizr = Join-Path $bin 'structurizr/structurizr.bat'
 $plantuml = Join-Path $bin 'plantuml.jar'
 $drawio = Join-Path $repoRoot 'node_modules/drawio-headless/vendor/drawio-headless.exe'
+$puppeteerConfig = Join-Path $repoRoot 'scripts/puppeteer-ci.json'
 
 if (-not (Test-Path $plantuml)) { throw "PlantUML is missing. Run scripts/bootstrap.ps1." }
 if (-not (Test-Path (Join-Path $bin 'structurizr/structurizr.bat'))) { throw "Structurizr CLI is missing. Run scripts/bootstrap.ps1." }
@@ -17,8 +18,8 @@ New-Item -ItemType Directory -Force $rendered | Out-Null
 
 Push-Location $demo
 try {
-  npm exec -- mmdc -i (Join-Path $source 'mermaid-sequence.mmd') -o (Join-Path $rendered 'mermaid-sequence.svg')
-  npm exec -- mmdc -i (Join-Path $source 'mermaid-state.mmd') -o (Join-Path $rendered 'mermaid-state.png') -b transparent
+  npm exec -- mmdc -p $puppeteerConfig -i (Join-Path $source 'mermaid-sequence.mmd') -o (Join-Path $rendered 'mermaid-sequence.svg')
+  npm exec -- mmdc -p $puppeteerConfig -i (Join-Path $source 'mermaid-state.mmd') -o (Join-Path $rendered 'mermaid-state.png') -b transparent
 
   java -jar $plantuml -tsvg -Playout=smetana (Join-Path $source 'plantuml-class.puml') (Join-Path $source 'plantuml-deployment.puml')
   Move-Item (Join-Path $source 'plantuml-class.svg') (Join-Path $rendered 'plantuml-class.svg') -Force

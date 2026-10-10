@@ -11,8 +11,8 @@ test -f "$bin/plantuml.jar" || { echo "PlantUML is missing. Run scripts/bootstra
 test -x "$bin/structurizr/structurizr.sh" || { echo "Structurizr CLI is missing. Run scripts/bootstrap.sh." >&2; exit 1; }
 find "$root/node_modules/drawio-headless/vendor" -type f -maxdepth 1 | grep -q . || { echo "drawio-headless binary is missing. Run scripts/bootstrap.sh after npm ci." >&2; exit 1; }
 
-npm exec -- mmdc -i "$source_dir/mermaid-sequence.mmd" -o "$rendered/mermaid-sequence.svg"
-npm exec -- mmdc -i "$source_dir/mermaid-state.mmd" -o "$rendered/mermaid-state.png" -b transparent
+npm exec -- mmdc -p "$root/scripts/puppeteer-ci.json" -i "$source_dir/mermaid-sequence.mmd" -o "$rendered/mermaid-sequence.svg"
+npm exec -- mmdc -p "$root/scripts/puppeteer-ci.json" -i "$source_dir/mermaid-state.mmd" -o "$rendered/mermaid-state.png" -b transparent
 java -jar "$bin/plantuml.jar" -tsvg -Playout=smetana "$source_dir/plantuml-class.puml" "$source_dir/plantuml-deployment.puml"
 mv "$source_dir/plantuml-class.svg" "$rendered/plantuml-class.svg"
 mv "$source_dir/plantuml-deployment.svg" "$rendered/plantuml-deployment.svg"
