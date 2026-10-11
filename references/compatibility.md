@@ -20,9 +20,9 @@ Do not maintain separate copies of the workflow for each model provider.
 | Linux | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | `bash ./scripts/bootstrap.sh` | `bash ./scripts/render-all.sh` |
 | WSL | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | Use the Unix scripts inside WSL | Use the Unix scripts inside WSL |
 
-The scripts download the pinned PlantUML and Structurizr versions into `tools/bin/`. Graphviz and D2 use the pinned Node/WASM packages, so native `dot` and `d2` binaries are not required. `drawio-headless` is rebuilt during bootstrap so its platform helper is available after `npm ci`.
+The scripts download the pinned PlantUML and Structurizr versions into `skillRoot/tools/bin/`, where `skillRoot` is the directory containing this skill's `SKILL.md`. Graphviz and D2 use the pinned Node/WASM packages in `skillRoot/node_modules/`, so native `dot` and `d2` binaries are not required. `drawio-headless` is rebuilt during bootstrap so its platform helper is available after `npm ci` in `skillRoot`.
 
-The standard gallery is rendered from `examples/shop/` into `examples/shop/rendered/`. Run `npm ci` before bootstrap on a clean checkout.
+The standard gallery is rendered from `skillRoot/examples/shop/` into `skillRoot/examples/shop/rendered/`. Run `npm ci` from `skillRoot` before bootstrap on a clean checkout.
 
 The `Cross-platform render` GitHub Actions workflow runs the gallery on Ubuntu, macOS, and Windows. The existing `Validate diagrams / render` check remains the fast Linux validation used by branch protection.
 

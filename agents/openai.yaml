@@ -1,7 +1,7 @@
 interface:
   display_name: "Software diagrams"
-  short_description: "Create and render diagrams as code"
-  default_prompt: "Use $software-diagrams to create, render, and embed a software engineering diagram from editable source."
+  short_description: "Create software architecture, UML, C4, and diagrams-as-code visuals"
+  default_prompt: "Use $software-diagrams to create, render, validate, and embed a software architecture, UML, C4, Mermaid, PlantUML, Structurizr, Graphviz, D2, or draw.io diagram from editable source."
 
 policy:
   allow_implicit_invocation: true

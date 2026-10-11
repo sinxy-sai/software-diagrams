@@ -2,18 +2,18 @@
 
 ## Version policy
 
-Keep Node packages in `package-lock.json`. Keep PlantUML and Structurizr versions in the bootstrap scripts. Do not rely on whatever happens to be installed globally.
+Keep Node packages in `skillRoot/package-lock.json`. Keep PlantUML and Structurizr versions in the bootstrap scripts. Do not rely on whatever happens to be installed globally. `skillRoot` is the directory containing this skill's `SKILL.md`, not the host project's root.
 
 ## Renderer mapping
 
 | Format | Runtime in this repository | Primary output |
 |---|---|---|
-| Mermaid | `@mermaid-js/mermaid-cli` | SVG or PNG |
-| PlantUML | `tools/bin/plantuml.jar` + Java | SVG, PNG, PDF |
-| Structurizr DSL | `tools/bin/structurizr/` + Java | validated DSL and exported PlantUML views |
-| D2 | `@terrastruct/d2` WASM | SVG |
-| Graphviz DOT | `@hpcc-js/wasm-graphviz` | SVG |
-| draw.io XML | `drawio-headless` | SVG or PNG |
+| Mermaid | `skillRoot/node_modules/@mermaid-js/mermaid-cli` | SVG or PNG |
+| PlantUML | `skillRoot/tools/bin/plantuml.jar` + Java | SVG, PNG, PDF |
+| Structurizr DSL | `skillRoot/tools/bin/structurizr/` + Java | validated DSL and exported PlantUML views |
+| D2 | `skillRoot/node_modules/@terrastruct/d2` WASM | SVG |
+| Graphviz DOT | `skillRoot/node_modules/@hpcc-js/wasm-graphviz` | SVG |
+| draw.io XML | `skillRoot/node_modules/drawio-headless` | SVG or PNG |
 
 ## Why D2 and Graphviz use WASM
 
@@ -25,7 +25,7 @@ Structurizr's `theme default` can fetch `https://static.structurizr.com/themes/d
 
 ## Mermaid and npx
 
-Avoid using an unpinned `npx --yes` command in CI. The repository pins Mermaid CLI in `package.json`; use the local binary through `npm exec -- mmdc` or `npx --no-install mmdc` after `npm ci`. An npx-only invocation stores packages in the user's npm cache and is not a stable project installation.
+Avoid using an unpinned `npx --yes` command in CI. The skill pins Mermaid CLI in `skillRoot/package.json`; use the local binary through `npm exec -- mmdc` or `npx --no-install mmdc` after running `npm ci` from `skillRoot`. An npx-only invocation stores packages in the user's npm cache and is not a stable skill installation.
 
 On GitHub-hosted Linux runners, Chromium may fail with `No usable sandbox` when Mermaid CLI launches Puppeteer. The repository's CI scripts pass `scripts/puppeteer-ci.json`, which adds `--no-sandbox` and `--disable-setuid-sandbox` for the isolated CI runner. Do not make those flags the default for local browsing or untrusted multi-tenant environments.
 

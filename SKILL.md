@@ -1,11 +1,17 @@
 ---
 name: software-diagrams
-description: Use when creating, editing, rendering, validating, or embedding software engineering diagrams as code with Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, or draw.io XML.
+description: Use when creating, editing, rendering, validating, or embedding software engineering diagrams as code, software architecture diagrams, UML, C4 models, Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, or draw.io XML.
 ---
 
 # Software diagrams as code
 
 用“先澄清模型，再确定交付契约，选择最合适的 DSL，生成单一来源源码，最后渲染和验证”的流程绘制软件工程图。canonical source 默认保留在本地工作区；是否发布源码或图片由 publication profile 决定。用户明确的文件、提交和发布要求优先于本 skill 的默认值。
+
+## 路径边界
+
+把 `skillRoot` 定义为本 `SKILL.md` 所在目录。若 skill 安装在宿主项目的 `.agents/skills/software-diagrams/`，则 `skillRoot` 就是 `<project>/.agents/skills/software-diagrams/`。本 skill 的 `package.json`、`node_modules/`、`tools/` 和 `scripts/` 都属于 `skillRoot`；宿主项目根目录只保存用户的图源、文档、渲染产物和项目自己的依赖。
+
+运行 `npm ci`、bootstrap 或本 skill 的 gallery 脚本时，必须以 `skillRoot` 为工作目录或调用其中的脚本。不要把宿主项目的 `tools/`、`node_modules/` 或其他 skill 的目录当作本 skill 的依赖目录，也不要把本 skill 的依赖写入宿主项目根目录。
 
 宿主安装和平台差异请按需阅读 [references/compatibility.md](references/compatibility.md)。`SKILL.md` 是跨模型的核心工作流；`agents/openai.yaml`、`CLAUDE.md` 和 `AGENTS.md` 只是不同宿主的入口或元数据，不要复制出多份独立工作流。
 
@@ -36,7 +42,7 @@ description: Use when creating, editing, rendering, validating, or embedding sof
    - 长图拆成多个视图或子图，避免一张图承担多个叙事目标。
 6. **渲染和验证**
    - 如果目标项目提供 `bootstrap`/`render-all` 脚本，先阅读其作用，再按项目约定运行；仓库里的示例 gallery 脚本不等于用户项目的渲染器。
-   - 优先调用项目锁定的 CLI 或本 skill 仓库的本地工具链；不要为了一个图把完整工具链复制进用户项目，除非用户要求。
+   - 优先调用目标项目已经锁定的 CLI；如果使用本 skill 提供的工具链，调用 `skillRoot` 下的本地工具，不要为了一个图把它复制到宿主项目根目录，除非用户要求。
    - 验证语法、节点是否遗漏、箭头方向、图例、字体、边界、可读性、文件路径、规范来源与渲染产物是否一致。
    - 检查 Markdown 相对链接和嵌入图片是否存在；能进行视觉检查时，打开每种输出格式至少一张图确认无裁切、重叠或过小文字。不能打开图像时，明确报告“视觉检查未完成”，静态 XML/dimension 检查不能替代视觉验收。
    - 对中文文本检查字体和编码；Windows 下先设置 UTF-8 输出，编码异常不能被当成 DSL 或渲染语法错误。
@@ -53,47 +59,45 @@ description: Use when creating, editing, rendering, validating, or embedding sof
 
 ## 可复现渲染工具链
 
-优先把渲染器固定在项目内，不依赖开发机的全局 PATH。推荐在项目中使用类似下面的目录：
+优先把渲染器固定在 `skillRoot` 内，不依赖开发机的全局 PATH。安装在宿主项目中的目录结构如下：
 
 ```text
-tools/
+<project>/.agents/skills/software-diagrams/
+  tools/
+    bin/
   package.json
   package-lock.json
-  render-all.ps1
-  render-wasm.mjs
+  scripts/
+    render-all.ps1
+    render-wasm.mjs
   node_modules/
     @hpcc-js/wasm-graphviz/
     @terrastruct/d2/
     drawio-headless/
-  bin/
-    plantuml.jar
-    structurizr/
-      structurizr.bat
-      lib/
 ```
 
 已验证的 Windows 调用方式：
 
 | 工具 | 推荐安装/存放 | 调用方式 |
 |---|---|---|
-| Mermaid CLI | 项目依赖；生产/CI 应固定到项目依赖 | `npm exec -- mmdc -i diagram.mmd -o diagram.svg` |
-| PlantUML | 项目内 `tools/bin/plantuml.jar`；需要 Java | `java -jar tools/bin/plantuml.jar -tsvg diagram.puml` |
-| Structurizr CLI | 项目内 `tools/bin/structurizr/` | `tools/bin/structurizr/structurizr.bat validate -w architecture.dsl`，再用 `export` 导出视图源码 |
-| D2 | 项目内 npm 包 `@terrastruct/d2`，通过 WASM 脚本调用 | `node scripts/render-wasm.mjs` |
-| Graphviz | 项目内 npm 包 `@hpcc-js/wasm-graphviz`，通过 WASM 脚本调用 | `node scripts/render-wasm.mjs` |
-| draw.io | 项目内 npm 包 `drawio-headless`；二进制在该包的 `vendor/` | `npm exec -- drawio-headless render input.drawio output.svg` |
+| Mermaid CLI | `skillRoot/node_modules/`；版本由 skill 的 lockfile 固定 | `npm exec -- mmdc -i diagram.mmd -o diagram.svg` |
+| PlantUML | `skillRoot/tools/bin/plantuml.jar`；需要 Java | `java -jar tools/bin/plantuml.jar -tsvg diagram.puml` |
+| Structurizr CLI | `skillRoot/tools/bin/structurizr/` | `tools/bin/structurizr/structurizr.bat validate -w architecture.dsl`，再用 `export` 导出视图源码 |
+| D2 | `skillRoot/node_modules/@terrastruct/d2/`，通过 WASM 脚本调用 | `node scripts/render-wasm.mjs` |
+| Graphviz | `skillRoot/node_modules/@hpcc-js/wasm-graphviz/`，通过 WASM 脚本调用 | `node scripts/render-wasm.mjs` |
+| draw.io | `skillRoot/node_modules/drawio-headless/`；二进制在该包的 `vendor/` | `npm exec -- drawio-headless render input.drawio output.svg` |
 
-本地实测位置示例：
+安装在宿主项目后的实际位置示例：
 
 ```text
-tools/bin/plantuml.jar
-tools/bin/structurizr/structurizr.bat
-node_modules/@hpcc-js/wasm-graphviz/
-node_modules/@terrastruct/d2/
-node_modules/drawio-headless/
+<project>/.agents/skills/software-diagrams/tools/bin/plantuml.jar
+<project>/.agents/skills/software-diagrams/tools/bin/structurizr/structurizr.bat
+<project>/.agents/skills/software-diagrams/node_modules/@hpcc-js/wasm-graphviz/
+<project>/.agents/skills/software-diagrams/node_modules/@terrastruct/d2/
+<project>/.agents/skills/software-diagrams/node_modules/drawio-headless/
 ```
 
-不要把 `npx --yes @mermaid-js/mermaid-cli` 当成稳定安装方式。需要 CI、离线构建或团队复现时，把 `@mermaid-js/mermaid-cli` 加入项目 `devDependencies`，先运行 `npm ci`，再用 `npm exec -- mmdc` 或项目的 `node_modules/.bin/mmdc`。
+不要把 `npx --yes @mermaid-js/mermaid-cli` 当成稳定安装方式。需要 CI、离线构建或团队复现时，把 `@mermaid-js/mermaid-cli` 固定在 `skillRoot/package.json`，先在 `skillRoot` 运行 `npm ci`，再用 `npm exec -- mmdc` 或 `skillRoot/node_modules/.bin/mmdc`。
 
 不要把 D2 和 Graphviz 的 WASM 包误当成系统级 `d2`/`dot` 命令；它们需要由 Node 脚本加载并写出 SVG。若项目已经安装原生 `dot` 或 `d2`，可以直接使用，但仍应在文档中记录版本和 fallback。
 
@@ -103,10 +107,10 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 
 ## 一键重建和验证
 
-如果目标项目已有统一脚本，优先执行目标项目的脚本；如果你在本 skill 仓库中验证 gallery，才使用下面的命令：
+如果目标项目已有统一脚本，优先执行目标项目的脚本；如果使用本 skill 的 gallery，必须从 `skillRoot` 调用下面的命令：
 
 ```powershell
-& .\scripts\render-all.ps1
+& <skillRoot>\scripts\render-all.ps1
 ```
 
 本仓库脚本按以下顺序工作：渲染 Mermaid；运行 PlantUML；验证并导出 Structurizr；渲染 D2/Graphviz WASM；导出 draw.io SVG/PNG；最后列出所有输出文件。脚本遇到任何渲染错误都应返回非零退出码。它只验证 `examples/shop/`，不会自动发现或渲染其他项目的图。

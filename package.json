@@ -1,7 +1,7 @@
 {
   "name": "software-diagrams",
   "version": "0.1.0",
-  "description": "Reproducible renderers and examples for the software-diagrams skill",
+  "description": "Portable skill and reproducible toolchain for creating, rendering, validating, and embedding software architecture diagrams as code",
   "main": "index.js",
   "scripts": {
     "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
@@ -9,7 +9,26 @@
     "render:wasm": "node scripts/render-wasm.mjs",
     "validate:manifest": "node scripts/validate-manifest.mjs"
   },
-  "keywords": [],
+  "keywords": [
+    "agent-skill",
+    "software-diagrams",
+    "architecture-diagrams",
+    "software-architecture",
+    "uml",
+    "c4-model",
+    "mermaid",
+    "plantuml",
+    "structurizr",
+    "d2",
+    "graphviz",
+    "drawio",
+    "sequence-diagram",
+    "component-diagram",
+    "deployment-diagram",
+    "dependency-graph",
+    "architecture-as-code",
+    "diagrams-as-code"
+  ],
   "author": "",
   "license": "MIT",
   "type": "commonjs",
