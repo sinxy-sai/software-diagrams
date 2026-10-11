@@ -1,35 +1,55 @@
 ---
 name: software-diagrams
-description: 用 Mermaid、PlantUML、Structurizr DSL、D2、Graphviz DOT 和 draw.io XML 通过代码绘制软件工程图，并将图表作为源码、Markdown、LaTeX、PNG 或 SVG 交付。适用于架构图、组件图、类图、时序图、状态图、ER 图、流程图、部署图、网络图和其他软件设计文档中的图表。
+description: Use when creating, editing, rendering, validating, or embedding software engineering diagrams as code with Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, or draw.io XML.
 ---
 
 # Software diagrams as code
 
-用“先澄清模型，再选择最合适的 DSL，生成可审阅源码，最后渲染和验证”的流程绘制软件工程图。默认保留图表源码；图片只是可再生成的产物。
+用“先澄清模型，再确定交付契约，选择最合适的 DSL，生成单一来源源码，最后渲染和验证”的流程绘制软件工程图。canonical source 默认保留在本地工作区；是否发布源码或图片由 publication profile 决定。用户明确的文件、提交和发布要求优先于本 skill 的默认值。
 
 宿主安装和平台差异请按需阅读 [references/compatibility.md](references/compatibility.md)。`SKILL.md` 是跨模型的核心工作流；`agents/openai.yaml`、`CLAUDE.md` 和 `AGENTS.md` 只是不同宿主的入口或元数据，不要复制出多份独立工作流。
 
+项目级交付、Git 安全、manifest 和收尾报告的详细模板见 [references/project-workflow.md](references/project-workflow.md)。需要时再读取，不要把它当成宿主指令。
+
 ## 工作流
 
-1. **识别图的目的和受众**
+1. **分离请求和约束**
+   - 把用户要交付的结果与 `AGENTS.md`、宿主提示、skill 文档和工具输出分开记录；这些约束不能自动变成用户要求。
+   - 识别用户是否同时指定了目录、文件类型、Git 跟踪范围、提交方式或是否保留本地文件。没有指定时，使用下面的交付契约并说明假设。
+   - 不要因为任务涉及图表就自动创建完整文档体系、工具链或多个 DSL；先从最小范围开始。
+2. **识别图的目的和受众**
    - 先确认要表达的是结构、行为、数据、部署、流程还是项目计划。
    - 确定抽象层级：系统上下文、容器、组件、类、实例或代码级细节。
    - 记录方向、布局、主题、语言、输出格式、尺寸和是否需要可编辑源文件。
-2. **选择 DSL**
+3. **确定交付契约**
+   - 在写文件前建立一张简短映射表：图名、目的、受众、规范来源、规范输出、嵌入位置、是否提交到 Git。
+   - 对每张图选择一个规范来源：独立 DSL 文件或 Markdown 内嵌代码块。另一种形式只能由规范来源生成，不能手工复制维护。
+   - 使用 [references/project-workflow.md](references/project-workflow.md) 中的 publication profile：`tracked-source`、`local-source/published-artifacts` 或 `local-only-preview`。不要自造同义名称。
+   - 新项目或独立交付默认使用 `tracked-source`；已有 Git 状态的项目默认使用 `local-source/published-artifacts`，除非用户明确要求公开源码。无论哪种模式，都不要改变 Git 跟踪、暂存区、提交历史或远端状态。
+   - 对一张或更多图，使用一个 `diagram-manifest.json` 或 `diagram-manifest.yml` 记录上述映射；字段至少包括 `profile`、`id`、`purpose`、`source`、`renderer`、`outputs`、`documents` 和 `publication`。本仓库可用 `npm run validate:manifest -- diagram-manifest.json` 验证 JSON manifest。
+4. **选择 DSL**
    - 根据下方决策表选择工具；不要为了统一而强行使用同一种语法。
    - 如果一个工具无法自然表达需求，切换工具，并说明选择原因。
-3. **生成源码**
+5. **生成源码**
    - 先生成最小可读版本，再补充样式、边界、注释和细节。
    - 节点和关系使用稳定、语义化的 ID；显示文本可单独修改。
    - 长图拆成多个视图或子图，避免一张图承担多个叙事目标。
-4. **渲染和验证**
-   - 优先在本地调用相应 CLI 或编辑器渲染。
-   - 验证语法、节点是否遗漏、箭头方向、图例、字体、边界、可读性和文件路径。
+6. **渲染和验证**
+   - 如果目标项目提供 `bootstrap`/`render-all` 脚本，先阅读其作用，再按项目约定运行；仓库里的示例 gallery 脚本不等于用户项目的渲染器。
+   - 优先调用项目锁定的 CLI 或本 skill 仓库的本地工具链；不要为了一个图把完整工具链复制进用户项目，除非用户要求。
+   - 验证语法、节点是否遗漏、箭头方向、图例、字体、边界、可读性、文件路径、规范来源与渲染产物是否一致。
+   - 检查 Markdown 相对链接和嵌入图片是否存在；能进行视觉检查时，打开每种输出格式至少一张图确认无裁切、重叠或过小文字。不能打开图像时，明确报告“视觉检查未完成”，静态 XML/dimension 检查不能替代视觉验收。
+   - 对中文文本检查字体和编码；Windows 下先设置 UTF-8 输出，编码异常不能被当成 DSL 或渲染语法错误。
    - 失败时先修源码再重渲染，不要手工修改生成的 SVG/PNG。
-5. **交付**
+7. **交付**
    - 将源码放在项目的文档或 diagrams 目录，图片放在 assets/diagrams 或用户指定位置。
    - Markdown 用相对路径引用；LaTeX 优先引用 SVG/PDF 或转换后的 PNG。
    - 同时交付源码和渲染产物时，确保文件基名一致，例如 `context.mmd` 与 `context.svg`。
+   - 交付前列出实际创建、修改和未跟踪的文件，并说明哪些是本地生成物。不要自动创建 `docs/diagrams/README.md`、完整 docs 体系或工具链说明；只有 manifest 或用户需求需要时才创建。
+   - 除非用户明确要求，不运行 `git add`、`git reset`、`git commit`、`git push`，也不使用临时 index 改写提交历史。
+   - 如果用户要求提交，先保存 `git status --porcelain=v2 --untracked-files=all`、`git diff --cached --name-status`、`git log -n 5 --format=%s`、当前 branch/HEAD 和 remote 状态。只对明确的 publish set 做路径限定操作，收尾时比较前后状态，并沿用仓库已有提交风格。
+   - 对每个拟发布文件运行 `git check-ignore -v --no-index <path>`；发布文件被忽略时停止并报告，不能用宽泛的 `tools/` 或 `docs/diagrams/*` 规则掩盖冲突。
+   - 删除提交、rebase、reset、amend 或 force-push 属于历史重写：先确认是否已推送，记录 HEAD/branch/remote，说明不可逆影响，并优先使用新提交或新分支。只有用户逐项明确要求时才执行标准 Git 历史操作。
 
 ## 可复现渲染工具链
 
@@ -56,7 +76,7 @@ tools/
 
 | 工具 | 推荐安装/存放 | 调用方式 |
 |---|---|---|
-| Mermaid CLI | 项目依赖或 npx 缓存；生产/CI 应固定到项目依赖 | `npx @mermaid-js/mermaid-cli -i diagram.mmd -o diagram.svg` |
+| Mermaid CLI | 项目依赖；生产/CI 应固定到项目依赖 | `npm exec -- mmdc -i diagram.mmd -o diagram.svg` |
 | PlantUML | 项目内 `tools/bin/plantuml.jar`；需要 Java | `java -jar tools/bin/plantuml.jar -tsvg diagram.puml` |
 | Structurizr CLI | 项目内 `tools/bin/structurizr/` | `tools/bin/structurizr/structurizr.bat validate -w architecture.dsl`，再用 `export` 导出视图源码 |
 | D2 | 项目内 npm 包 `@terrastruct/d2`，通过 WASM 脚本调用 | `node scripts/render-wasm.mjs` |
@@ -73,7 +93,7 @@ node_modules/@terrastruct/d2/
 node_modules/drawio-headless/
 ```
 
-`npx --yes @mermaid-js/mermaid-cli` 会把 Mermaid CLI 放进用户 npm 缓存的 `_npx` 临时目录；该目录可能因缓存清理或版本变化而改变，不能作为项目的稳定依赖。需要 CI、离线构建或团队复现时，把 `@mermaid-js/mermaid-cli` 加入项目 `devDependencies`，并从项目的 `node_modules/.bin/mmdc` 调用。
+不要把 `npx --yes @mermaid-js/mermaid-cli` 当成稳定安装方式。需要 CI、离线构建或团队复现时，把 `@mermaid-js/mermaid-cli` 加入项目 `devDependencies`，先运行 `npm ci`，再用 `npm exec -- mmdc` 或项目的 `node_modules/.bin/mmdc`。
 
 不要把 D2 和 Graphviz 的 WASM 包误当成系统级 `d2`/`dot` 命令；它们需要由 Node 脚本加载并写出 SVG。若项目已经安装原生 `dot` 或 `d2`，可以直接使用，但仍应在文档中记录版本和 fallback。
 
@@ -83,13 +103,29 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 
 ## 一键重建和验证
 
-如果项目已有统一脚本，优先执行它而不是手工运行多个命令：
+如果目标项目已有统一脚本，优先执行目标项目的脚本；如果你在本 skill 仓库中验证 gallery，才使用下面的命令：
 
 ```powershell
 & .\scripts\render-all.ps1
 ```
 
-脚本应按以下顺序工作：渲染 Mermaid；运行 PlantUML；验证并导出 Structurizr；渲染 D2/Graphviz WASM；导出 draw.io SVG/PNG；最后列出所有输出文件。脚本遇到任何渲染错误都应返回非零退出码。
+本仓库脚本按以下顺序工作：渲染 Mermaid；运行 PlantUML；验证并导出 Structurizr；渲染 D2/Graphviz WASM；导出 draw.io SVG/PNG；最后列出所有输出文件。脚本遇到任何渲染错误都应返回非零退出码。它只验证 `examples/shop/`，不会自动发现或渲染其他项目的图。
+
+## 安装、编码和环境边界
+
+- `npx skills find` 依赖外部索引，找不到名称不代表 GitHub 仓库不存在；已知仓库地址时可直接使用 `npx skills add <owner/repo>`。
+- 安装 skill 与安装渲染器是两件事：skills CLI 只安装说明文件，不会安装 Node、Java、PlantUML、Structurizr 或 draw.io 依赖。
+- Windows 终端执行 Python 或 skills CLI 前，优先使用 UTF-8 输出，例如 PowerShell 设置 `$env:PYTHONIOENCODING='utf-8'`；遇到 `UnicodeEncodeError` 时先修复编码环境再判断搜索失败。
+- 更完整的 PowerShell 诊断可使用 `[Console]::OutputEncoding=[Text.UTF8Encoding]::new()` 和 `$OutputEncoding=[Console]::OutputEncoding`；脚本和报告应避免依赖 emoji 判断成功或失败。
+- 渲染需要网络时只运行仓库提供的 bootstrap；不要把临时 npm 缓存或下载的二进制误当成项目内的可复现依赖。
+
+## 交付前硬门槛
+
+- 没有交付契约或 manifest，不开始批量生成图。
+- 没有 canonical source，不交付渲染图。
+- 没有实际渲染命令和输出清单，不声称图已验证。
+- 没有视觉检查，不声称 SVG/PNG 可读。
+- 没有 Git 前后状态对比，不声称暂存区未被影响。
 
 ## 工具决策表
 
@@ -110,6 +146,8 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 - **依赖、调用、拓扑关系网络**：优先 Graphviz DOT；节点很多时选择合适布局引擎。
 - **需要拖拽后续编辑**：输出 draw.io XML，并避免只交付截图。
 - **同一模型需要多个视图**：优先 Structurizr DSL 或维护单一数据源后生成多个 DSL 文件。
+
+当用户要求解释算法、数据格式或复杂度时，先建立“主题 → 正文 → 图”的矩阵；图只辅助解释，不能替代正文。为提交图、依赖网络、算法状态或时序行为选择 Graphviz、状态图或 PlantUML，并在 manifest 或回复中写出选择理由。
 
 ## 建模约定
 

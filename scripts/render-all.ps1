@@ -1,4 +1,8 @@
 $ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $true
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$OutputEncoding = [Console]::OutputEncoding
+$env:PYTHONIOENCODING = 'utf-8'
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $demo = Join-Path $repoRoot 'examples/shop'
@@ -51,3 +55,7 @@ finally { Pop-Location }
 }
 
 Write-Host "Rendered diagrams in $demo"
+Write-Host 'Output manifest:'
+Get-ChildItem -LiteralPath $rendered -File | Sort-Object Name | ForEach-Object {
+  Write-Host ("- " + $_.FullName)
+}

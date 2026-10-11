@@ -23,6 +23,8 @@ bunx skills add sinxy-sai/software-diagrams
 pnpm dlx skills add sinxy-sai/software-diagrams
 ```
 
+`skills find` searches an external index and may lag behind a GitHub repository. If the exact name is not found but the repository is known, use the direct command above. Installing the skill only installs its instructions; it does not install the diagram renderers.
+
 Use `--agent` to select an agent or `--all` to install for every supported agent. The CLI reads the root `SKILL.md`; it does not require the renderer dependencies in this repository.
 
 ### Host-specific entrypoints
@@ -44,6 +46,16 @@ Clone the repository when you need the examples, pinned renderers, or one-comman
 - Node.js 20 or newer (Node 22 is recommended).
 - Java 17 or newer for PlantUML and Structurizr CLI.
 - PowerShell 7 on Windows, or Bash plus `curl`/`unzip` on macOS/Linux.
+
+On Windows, use a UTF-8 PowerShell session before running search or render helpers:
+
+```powershell
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$OutputEncoding = [Console]::OutputEncoding
+$env:PYTHONIOENCODING = 'utf-8'
+```
+
+If a command reports `UnicodeEncodeError`, fix the console encoding first. Treating that error as a missing skill or broken diagram produces a false diagnosis.
 
 ### Clone and install dependencies
 
@@ -79,6 +91,14 @@ bash ./scripts/render-all.sh
 ```
 
 Outputs are written to `examples/shop/rendered/`. The command validates Structurizr, renders Mermaid/PlantUML/D2/Graphviz/draw.io, and exits non-zero if a renderer fails.
+
+For a project-specific JSON asset manifest, validate paths and rendered outputs with:
+
+```bash
+npm run validate:manifest -- diagram-manifest.json <project-root>
+```
+
+The gallery render command and manifest validator check different things: the former checks this repository's pinned renderer gallery; the latter checks the files and document references declared by a user's project.
 
 ## Use the skill
 

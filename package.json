@@ -6,7 +6,8 @@
   "scripts": {
     "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
     "render:unix": "bash scripts/render-all.sh",
-    "render:wasm": "node scripts/render-wasm.mjs"
+    "render:wasm": "node scripts/render-wasm.mjs",
+    "validate:manifest": "node scripts/validate-manifest.mjs"
   },
   "keywords": [],
   "author": "",

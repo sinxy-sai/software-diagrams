@@ -37,3 +37,17 @@ The `Cross-platform render` GitHub Actions workflow runs the gallery on Ubuntu, 
 | Other agents | Their documented instruction or skill mechanism | Give the agent the root `SKILL.md` and keep the repository scripts available. |
 
 The model provider does not change the renderer requirements. An agent must still have Node.js, Java, and the platform utilities listed above, plus network access during bootstrap unless the pinned tools are already cached.
+
+## Windows UTF-8 diagnostics
+
+Before running Python, `npx`, or a helper that prints non-ASCII text in PowerShell 7, initialize UTF-8 output:
+
+```powershell
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$OutputEncoding = [Console]::OutputEncoding
+$env:PYTHONIOENCODING = 'utf-8'
+```
+
+If a search helper reports `UnicodeEncodeError` for an emoji or Chinese text, treat it as a console encoding failure. Fix the session encoding and retry before diagnosing a missing skill or invalid diagram.
+
+`bootstrap.ps1` checks Node.js, npm, Java, and PowerShell before downloading tools. It does not install the skill itself, and installing the skill with `npx skills add` does not install renderers.

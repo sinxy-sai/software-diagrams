@@ -1,5 +1,31 @@
 $ErrorActionPreference = 'Stop'
 
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$OutputEncoding = [Console]::OutputEncoding
+$env:PYTHONIOENCODING = 'utf-8'
+
+function Require-Command([string]$Name, [string]$Hint) {
+  if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+    throw "$Name is required but was not found. $Hint"
+  }
+}
+
+Require-Command 'node' 'Install Node.js 20+ and restart PowerShell.'
+Require-Command 'npm' 'Install npm with Node.js 20+.'
+Require-Command 'java' 'Install Java 17+ and ensure java is on PATH.'
+Require-Command 'pwsh' 'Run this script from PowerShell 7+.'
+
+$nodeMajor = [int]((node --version).TrimStart('v').Split('.')[0])
+$javaVersion = (java -version 2>&1 | Select-Object -First 1)
+if ($nodeMajor -lt 20) { throw "Node.js 20+ is required; found $(node --version)." }
+$javaMatch = [regex]::Match($javaVersion, '"(?<version>[^" ]+)"')
+if (-not $javaMatch.Success) { throw "Could not determine Java version from: $javaVersion" }
+$javaMajorText = $javaMatch.Groups['version'].Value.Split('.')[0]
+$javaMajor = [int]$javaMajorText
+if ($javaMajor -eq 1) { $javaMajor = [int]$javaMatch.Groups['version'].Value.Split('.')[1] }
+if ($javaMajor -lt 17) { throw "Java 17+ is required; found $javaVersion" }
+Write-Host "Using Node.js $(node --version) and $javaVersion"
+
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $bin = Join-Path $root 'tools/bin'
 $plantumlVersion = '1.2026.8'
