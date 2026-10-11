@@ -62,22 +62,27 @@ The complete local pipeline is:
 
 It validates Structurizr, exports its C4 views to PlantUML, renders every source, and writes the image outputs into `examples/shop/rendered/`. The project-local WASM dependencies are in the repository root `package.json`.
 
-For individual tools, use the following equivalent commands from the repository root:
+For individual tools, use the following commands from the repository root. The gallery helper for D2 and Graphviz is intentionally fixed to these example files:
 
 ```bash
 npm exec -- mmdc -i examples/shop/sources/mermaid-sequence.mmd -o examples/shop/rendered/mermaid-sequence.svg
-java -jar tools/bin/plantuml.jar -tsvg examples/shop/sources/plantuml-class.puml
 node scripts/render-wasm.mjs
 npm exec -- drawio-headless render examples/shop/sources/drawio-architecture.drawio examples/shop/rendered/drawio-architecture.svg
 ```
 
+For PlantUML, use the full gallery command so generated files are moved from `sources/` into `rendered/`:
+
+```powershell
+pwsh ./scripts/render-all.ps1
+```
+
 Open the `.drawio` files in diagrams.net and use **File → Export as** to produce SVG, PNG or PDF. Keep the XML alongside the export as its editable source.
 
-Embed a Mermaid source block directly in Markdown when supported. Otherwise use a relative image link, e.g. `![Shop architecture](rendered/d2-architecture.svg)`. For LaTeX, render SVG/PDF and include with `\includesvg` or `\includegraphics`.
+Use a Mermaid block as the canonical source when the document is meant to own the diagram. If the editable source is a separate file, reference its rendered image instead, e.g. `![Shop architecture](rendered/d2-architecture.svg)`. For LaTeX, render SVG/PDF and include with `\includesvg` or `\includegraphics`.
 
-## Verified outputs
+## Expected outputs
 
-The pipeline was executed successfully. Current generated outputs include:
+After a successful gallery render, generated outputs include:
 
 - Mermaid: `mermaid-sequence.svg`, `mermaid-state.png`
 - PlantUML: `plantuml-class.svg`, `plantuml-deployment.svg`

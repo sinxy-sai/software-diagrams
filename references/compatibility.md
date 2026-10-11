@@ -15,14 +15,14 @@ Do not maintain separate copies of the workflow for each model provider.
 
 | Platform | Required runtime | Setup | Render |
 | --- | --- | --- | --- |
-| Windows 10/11 | Node.js 20+, Java 17+, PowerShell 7+, npm | `pwsh ./scripts/bootstrap.ps1` | `pwsh ./scripts/render-all.ps1` |
-| macOS | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | `bash ./scripts/bootstrap.sh` | `bash ./scripts/render-all.sh` |
-| Linux | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | `bash ./scripts/bootstrap.sh` | `bash ./scripts/render-all.sh` |
+| Windows 10/11 | Node.js 20+, Java 17+, PowerShell 7+, npm | `npm ci` then `pwsh ./scripts/bootstrap.ps1` | `pwsh ./scripts/render-all.ps1` |
+| macOS | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | `npm ci` then `bash ./scripts/bootstrap.sh` | `bash ./scripts/render-all.sh` |
+| Linux | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | `npm ci` then `bash ./scripts/bootstrap.sh` | `bash ./scripts/render-all.sh` |
 | WSL | Node.js 20+, Java 17+, Bash, `curl`, `unzip`, npm | Use the Unix scripts inside WSL | Use the Unix scripts inside WSL |
 
-The scripts download the pinned PlantUML and Structurizr versions into `skillRoot/tools/bin/`, where `skillRoot` is the directory containing this skill's `SKILL.md`. Graphviz and D2 use the pinned Node/WASM packages in `skillRoot/node_modules/`, so native `dot` and `d2` binaries are not required. `drawio-headless` is rebuilt during bootstrap so its platform helper is available after `npm ci` in `skillRoot`.
+On a clean checkout, run `npm ci` from `skillRoot` before bootstrap. Bootstrap downloads the configured PlantUML and Structurizr versions into `skillRoot/tools/bin/` when those files are absent; it does not replace an existing tool automatically. Graphviz and D2 use the pinned Node/WASM packages in `skillRoot/node_modules/`, so native `dot` and `d2` binaries are not required. `drawio-headless` is rebuilt during bootstrap so its platform helper is available after `npm ci` in `skillRoot`.
 
-The standard gallery is rendered from `skillRoot/examples/shop/` into `skillRoot/examples/shop/rendered/`. Run `npm ci` from `skillRoot` before bootstrap on a clean checkout.
+The standard gallery is rendered from `skillRoot/examples/shop/` into `skillRoot/examples/shop/rendered/`.
 
 The `Cross-platform render` GitHub Actions workflow runs the gallery on Ubuntu, macOS, and Windows. The existing `Validate diagrams / render` check remains the fast Linux validation used by branch protection.
 

@@ -4,8 +4,8 @@ This repository contains a portable software-diagrams skill. For any task that c
 
 Use the checked-in toolchain and platform script:
 
-- Windows: `pwsh ./scripts/bootstrap.ps1` then `pwsh ./scripts/render-all.ps1`
-- macOS/Linux: `bash ./scripts/bootstrap.sh` then `bash ./scripts/render-all.sh`
+- Windows: from `skillRoot`, run `npm ci`, then `pwsh ./scripts/bootstrap.ps1` and `pwsh ./scripts/render-all.ps1`
+- macOS/Linux: from `skillRoot`, run `npm ci`, then `bash ./scripts/bootstrap.sh` and `bash ./scripts/render-all.sh`
 
 Keep diagram source files editable and reviewable. Do not rely on globally installed `dot`, `d2`, PlantUML, or Structurizr when the repository-local tools provide the same capability. Preserve source files when producing PNG/SVG outputs.
 

@@ -77,7 +77,7 @@ On macOS/Linux:
 bash ./scripts/bootstrap.sh
 ```
 
-The bootstrap scripts put PlantUML and Structurizr under `tools/bin/`. They are intentionally not committed to Git; versions and official download URLs are pinned in the scripts.
+The bootstrap scripts put the configured PlantUML and Structurizr versions under `tools/bin/` when those files are absent. They are intentionally not committed to Git; versions and official download URLs are pinned in the scripts.
 They also rebuild the draw.io native helper if npm skipped its postinstall script.
 
 ## Render the example gallery
