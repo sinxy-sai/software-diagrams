@@ -89,11 +89,11 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          package_dir="dist/software-diagrams-${TAG}"
-          mkdir -p "$package_dir"
-          cp SKILL.md README.md LICENSE AGENTS.md CLAUDE.md "$package_dir/"
-          cp -R agents references "$package_dir/"
-          tar -czf "software-diagrams-${TAG}.tar.gz" -C dist "software-diagrams-${TAG}"
+          git archive \
+            --format=tar.gz \
+            --prefix="software-diagrams-${TAG}/" \
+            --output="software-diagrams-${TAG}.tar.gz" \
+            "$TAG"
           sha256sum "software-diagrams-${TAG}.tar.gz" > SHA256SUMS
 
       - name: Create GitHub release
