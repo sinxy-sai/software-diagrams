@@ -1,6 +1,6 @@
 ---
 name: software-diagrams
-description: Use when creating, editing, rendering, validating, or embedding software engineering diagrams as code, software architecture diagrams, UML, C4 models, Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, or draw.io XML.
+description: Use when creating, editing, rendering, validating, embedding, or moving software engineering diagrams between editable sources and Figma/FigJam, including software architecture diagrams, UML, C4 models, Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, or draw.io XML.
 ---
 
 # Software diagrams as code
@@ -40,6 +40,7 @@ description: Use when creating, editing, rendering, validating, or embedding sof
    - 先生成最小可读版本，再补充样式、边界、注释和细节。
    - 节点和关系使用稳定、语义化的 ID；显示文本可单独修改。
    - 长图拆成多个视图或子图，避免一张图承担多个叙事目标。
+   - 如果用户要求在 Figma/FigJam 中绘制或重绘，先确定原始 DSL/SVG 是否仍是 canonical source；Figma 文件默认是可编辑协作产物，不要用它替代可复现源码。
 6. **渲染和验证**
    - 如果目标项目提供 `bootstrap`/`render-all` 脚本，先阅读其作用，再按项目约定运行；本仓库的 gallery 脚本只验证 `examples/shop/`，不代表用户项目的图已经渲染。
    - 优先调用目标项目已经锁定的 CLI；否则使用 `skillRoot` 下的本地工具。不要为了一个图把 skill 工具复制到宿主项目根目录，除非用户要求。
@@ -47,6 +48,7 @@ description: Use when creating, editing, rendering, validating, or embedding sof
    - 检查 Markdown 相对链接和嵌入图片是否存在；能进行视觉检查时，每种输出格式至少打开一张，确认无裁切、重叠、乱码或过小文字。不能打开图像时，明确报告“视觉检查未完成”；文件存在或尺寸检查不能替代视觉验收。
    - 对中文文本检查字体和编码；Windows 下先设置 UTF-8 输出，编码异常不能被当成 DSL 或渲染语法错误。
    - 失败时先修源码再重渲染，不要手工修改生成的 SVG/PNG。
+   - Figma/FigJam 交付按 [references/figma-workflow.md](references/figma-workflow.md) 执行：先生成或导入结构，再做增量编辑，并验证链接、节点结构和截图；Figma 文件不能替代本地源码渲染验证。
 7. **交付**
    - 将源码放在项目的文档或 diagrams 目录，图片放在 assets/diagrams 或用户指定位置。
    - Markdown 用相对路径引用；LaTeX 优先引用 SVG/PDF 或转换后的 PNG。
@@ -141,6 +143,7 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 | D2 | 现代架构图、流程图、需要较强布局和主题控制的图 | `.d2`；适合导出 SVG/PNG |
 | Graphviz DOT | 图算法、依赖图、调用图、状态/关系网络、可控布局 | `.dot`；通过项目锁定的 Graphviz 引擎或 WASM wrapper 导出 |
 | draw.io XML | 需要在 diagrams.net 中继续手工编辑、交付给非开发者 | `.drawio`/`.xml`；应保留可编辑 XML |
+| Figma/FigJam | 需要在线协作、手工调整、从其他图形格式重绘或添加注释 | 可编辑 Figma/FigJam 文件；保留原始 DSL/SVG，记录文件链接 |
 
 ## 常见选择规则
 
@@ -149,6 +152,7 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 - **流程和交互叙事**：优先 Mermaid 或 D2。
 - **依赖、调用、拓扑关系网络**：优先 Graphviz DOT；节点很多时选择合适布局引擎。
 - **需要拖拽后续编辑**：输出 draw.io XML，并避免只交付截图。
+- **需要 Figma/FigJam 协作或重绘**：保留原始 DSL/SVG，优先生成结构化 FigJam 图或导入 SVG，再在同一个文件中增量编辑；不要把截图当作唯一交付物。
 - **同一模型需要多个视图**：优先使用 Structurizr DSL；其他工具应保留一个 canonical source，把其他 DSL 或图片当作生成物。
 
 当用户要求解释算法、数据格式或复杂度时，先建立“主题 → 正文 → 图”的矩阵；图只辅助解释，不能替代正文。为算法图、依赖网络、状态或时序行为选择合适的 Graphviz、状态图或 PlantUML 视图，并在 manifest 或回复中写出选择理由。
@@ -256,6 +260,10 @@ digraph G {
 
 只有在用户需要 diagrams.net 可编辑文件时直接生成 XML。保持标准 `<mxfile>`、`<diagram>`、`<mxGraphModel>` 结构；使用唯一 cell ID、父子层级和几何坐标。交付前用 diagrams.net 打开并检查连线锚点、分组和文本，不要把 XML 当作图片格式。
 
+### Figma/FigJam
+
+Figma 不是本地 renderer，而是可编辑、可协作的交付目标。需要生成新图、重绘已有图或把其他格式带入 Figma 时，读取 [references/figma-workflow.md](references/figma-workflow.md)，按该文档选择生成、导入或增量编辑路径。
+
 ## Markdown、LaTeX 和其他工具
 
 ### Markdown
@@ -298,6 +306,7 @@ flowchart LR
 
 - draw.io：导入 `.drawio`/`.xml`，继续拖拽编辑，再导出 SVG/PNG/PDF。
 - Figma、Inkscape、Illustrator：优先导入 SVG；需要编辑路径时保留一份原始 SVG。
+- Figma/FigJam：生成或导入后保留原始 DSL/SVG；把 Figma 链接作为协作交付地址，不把远程文件当成本地可复现输出。
 - Word/PowerPoint：优先插入 SVG；若兼容性不足再使用高分辨率 PNG。
 - CI 文档：把源码作为构建输入，把图片放在构建目录，禁止只提交手工导出的孤立截图。
 
@@ -322,6 +331,8 @@ docs/
 
 - 图的目的、层级和受众是否明确？
 - DSL 是否适合该图，且能被项目工具链渲染？
+- 如果使用 Figma/FigJam，是否仍能从 canonical source 重建结构和渲染产物？
+- Figma 文件是新生成、从 SVG 导入，还是对已有文件做增量重绘？路径是否与用户要求一致？
 - 源码是否可读、可维护、可再次生成？
 - 关系方向、标签、协议、边界和图例是否正确？
 - 渲染后是否没有裁切、重叠、乱码或过小文字？
@@ -337,4 +348,5 @@ docs/
 - 文档内嵌使用 Mermaid 源码；
 - 独立交付使用 SVG，并保留 DSL 源码；
 - 需要编辑使用 draw.io XML；
+- 需要 Figma/FigJam 协作或重绘：保留 DSL/SVG 作为 canonical source，再生成或编辑可分享的 Figma/FigJam 文件；
 - 需要论文级排版时优先 SVG/PDF，并提供 LaTeX 片段。

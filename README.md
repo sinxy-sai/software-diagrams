@@ -1,12 +1,13 @@
 # Software diagrams skill
 
-Create software engineering diagrams as code with Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, and draw.io XML. The repository contains the reusable Codex skill, pinned rendering helpers, editable examples, and documentation for embedding diagrams in Markdown, LaTeX, and office/design tools.
+Create software engineering diagrams as code with Mermaid, PlantUML, Structurizr DSL, D2, Graphviz DOT, and draw.io XML, then move them into an editable Figma/FigJam collaboration workflow when needed. The repository contains the reusable Codex skill, pinned rendering helpers, editable examples, and documentation for embedding diagrams in Markdown, LaTeX, and design tools.
 
 ## What is included
 
 - `SKILL.md` — the Codex skill entrypoint and tool-selection workflow.
 - `agents/openai.yaml` — optional Codex UI metadata.
 - `references/` — renderer setup, output conventions, and troubleshooting.
+- `references/figma-workflow.md` — create, import, redraw, and incrementally edit diagrams in Figma/FigJam while preserving canonical sources.
 - `scripts/` — reproducible setup and one-command rendering helpers.
 - `examples/shop/` — a complete multi-format example with editable sources and generated outputs.
 - `examples/ai-algorithms/` — a second gallery covering Transformer, MoE inference, ResNet, LLM serving, trees, and BFS.
@@ -134,7 +135,13 @@ Open [examples/ai-algorithms/README.md](examples/ai-algorithms/README.md) for th
 1. Keep diagram sources editable and reviewable.
 2. Keep generated images reproducible from a clean checkout.
 3. Choose the DSL that best matches the diagram's semantics.
-4. Make outputs usable in Markdown, LaTeX, diagrams.net, Figma, Inkscape, Word, and PowerPoint.
+4. Make outputs usable in Markdown, LaTeX, diagrams.net, Figma/FigJam, Inkscape, Word, and PowerPoint.
+
+## Figma/FigJam workflow
+
+Figma/FigJam is an optional collaboration and editing target. Keep the Mermaid, PlantUML, Structurizr, D2, Graphviz, draw.io, or SVG source as the canonical artifact and keep local rendered outputs reproducible. Use the Figma connector available in the host environment to generate a supported Mermaid diagram in FigJam, import a locally rendered SVG, or inspect and incrementally redraw an existing Figma/FigJam file. The detailed routing and verification rules are in [references/figma-workflow.md](references/figma-workflow.md).
+
+Figma links are remote delivery metadata; they do not replace local source files, manifests, or renderer validation.
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "name": "software-diagrams",
   "version": "0.1.0",
-  "description": "Portable skill and reproducible toolchain for creating, rendering, validating, and embedding software architecture diagrams as code",
+  "description": "Portable skill and reproducible toolchain for creating, rendering, validating, embedding, and redrawing software diagrams in Figma/FigJam",
   "main": "index.js",
   "scripts": {
     "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
@@ -22,6 +22,9 @@
     "d2",
     "graphviz",
     "drawio",
+    "figma",
+    "figjam",
+    "diagram-redrawing",
     "sequence-diagram",
     "component-diagram",
     "deployment-diagram",
