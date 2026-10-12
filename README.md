@@ -9,6 +9,7 @@ Create software engineering diagrams as code with Mermaid, PlantUML, Structurizr
 - `references/` — renderer setup, output conventions, and troubleshooting.
 - `scripts/` — reproducible setup and one-command rendering helpers.
 - `examples/shop/` — a complete multi-format example with editable sources and generated outputs.
+- `examples/ai-algorithms/` — a second gallery covering Transformer, MoE inference, ResNet, LLM serving, trees, and BFS.
 - `package.json` / `package-lock.json` — pinned Node dependencies for WASM Graphviz, D2, draw.io headless, and Mermaid CLI.
 
 ## Install
@@ -125,6 +126,8 @@ Release assets include `software-diagrams-<tag>.tar.gz`, a source archive genera
 ## Example gallery
 
 Open [examples/shop/README.md](examples/shop/README.md) for the source files, rendered SVG/PNG outputs, and Markdown/LaTeX embedding snippets.
+
+Open [examples/ai-algorithms/README.md](examples/ai-algorithms/README.md) for the second gallery with AI architecture and data-structure/algorithm examples.
 
 ## Design goals
 
