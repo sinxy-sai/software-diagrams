@@ -44,9 +44,31 @@ const isRemote = (value) => /^(?:https?:|mailto:|data:|#)/i.test(value);
 
 for (const diagram of manifest.diagrams) {
   const required = ['id', 'purpose', 'source', 'renderer', 'outputs', 'documents', 'publication'];
-  for (const field of required) {
-    if (!(field in diagram)) fail(`${diagram.id ?? '<unknown>'} is missing ${field}`);
+  if (!diagram || typeof diagram !== 'object' || Array.isArray(diagram)) {
+    fail('each diagram entry must be an object');
+    continue;
   }
+  let missingField = false;
+  for (const field of required) {
+    if (!(field in diagram)) {
+      fail(`${diagram.id ?? '<unknown>'} is missing ${field}`);
+      missingField = true;
+    }
+  }
+  if (missingField) continue;
+  const validId = typeof diagram.id === 'string' && diagram.id.length > 0;
+  const validPurpose = typeof diagram.purpose === 'string' && diagram.purpose.length > 0;
+  const validSource = typeof diagram.source === 'string' && diagram.source.length > 0;
+  const validRenderer = typeof diagram.renderer === 'string' && diagram.renderer.length > 0;
+  const validOutputs = Array.isArray(diagram.outputs) && diagram.outputs.length > 0 && diagram.outputs.every((value) => typeof value === 'string');
+  const validDocuments = Array.isArray(diagram.documents) && diagram.documents.every((value) => typeof value === 'string');
+  if (!validId) fail('diagram id must be a non-empty string');
+  if (!validPurpose) fail(`${diagram.id ?? '<unknown>'}: purpose must be a non-empty string`);
+  if (!validSource) fail(`${diagram.id ?? '<unknown>'}: source must be a non-empty string`);
+  if (!validRenderer) fail(`${diagram.id ?? '<unknown>'}: renderer must be a non-empty string`);
+  if (!validOutputs) fail(`${diagram.id ?? '<unknown>'}: outputs must be a non-empty array of strings`);
+  if (!validDocuments) fail(`${diagram.id ?? '<unknown>'}: documents must be an array of strings`);
+  if (!validId || !validSource || !validOutputs || !validDocuments) continue;
   if (ids.has(diagram.id)) fail(`duplicate diagram id: ${diagram.id}`);
   ids.add(diagram.id);
   if (sources.has(diagram.source)) fail(`source is reused by multiple diagrams: ${diagram.source}`);
@@ -54,6 +76,14 @@ for (const diagram of manifest.diagrams) {
   if (!fs.existsSync(localPath(diagram.source))) fail(`${diagram.id}: source is missing: ${diagram.source}`);
   if (!['source', 'output', 'both', 'local'].includes(diagram.publication)) {
     fail(`${diagram.id}: publication must be source, output, both, or local`);
+  }
+  const allowedPublication = {
+    'tracked-source': new Set(['source', 'output', 'both']),
+    'local-source/published-artifacts': new Set(['output']),
+    'local-only-preview': new Set(['local']),
+  };
+  if (allowedPublication[manifest.profile] && !allowedPublication[manifest.profile].has(diagram.publication)) {
+    fail(`${diagram.id}: publication ${diagram.publication} is incompatible with profile ${manifest.profile}`);
   }
 
   const referencedPaths = new Set();

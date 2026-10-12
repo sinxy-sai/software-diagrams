@@ -85,8 +85,8 @@ description: Use when creating, editing, rendering, validating, or embedding sof
 | Mermaid CLI | `skillRoot/node_modules/`；版本由 skill 的 lockfile 固定 | 在 `skillRoot` 运行 `npm exec -- mmdc -i diagram.mmd -o diagram.svg` |
 | PlantUML | `skillRoot/tools/bin/plantuml.jar`；需要 Java | `java -jar tools/bin/plantuml.jar -tsvg diagram.puml` |
 | Structurizr CLI | `skillRoot/tools/bin/structurizr/` | `tools/bin/structurizr/structurizr.bat validate -w architecture.dsl`；需要视图源码时再运行 `export -w architecture.dsl -f plantuml -o <dir>` |
-| D2 | `skillRoot/node_modules/@terrastruct/d2/`，通过 WASM 脚本调用 | 本仓库的 `node scripts/render-wasm.mjs` 只渲染 gallery；用户项目应调用自己的脚本或 D2 CLI |
-| Graphviz | `skillRoot/node_modules/@hpcc-js/wasm-graphviz/`，通过 WASM 脚本调用 | 本仓库的 `node scripts/render-wasm.mjs` 只渲染 gallery；已有原生 CLI 时可按项目约定使用 |
+| D2 | `skillRoot/node_modules/@terrastruct/d2/`，通过 WASM 脚本调用 | 本仓库的 `node scripts/render-wasm.mjs` 只渲染 gallery；用户项目应调用自己的脚本，已有原生 CLI 时可按项目约定使用 |
+| Graphviz | `skillRoot/node_modules/@hpcc-js/wasm-graphviz/`，通过 WASM 脚本调用 | 本仓库的 `node scripts/render-wasm.mjs` 只渲染 gallery；用户项目应调用自己的脚本，已有原生 CLI 时可按项目约定使用 |
 | draw.io | `skillRoot/node_modules/drawio-headless/`；二进制在该包的 `vendor/` | `npm exec -- drawio-headless render input.drawio output.svg` |
 
 安装在宿主项目后的实际位置示例：
@@ -109,7 +109,7 @@ draw.io XML 不是图片；始终保留 `.drawio`/`.xml` 源码。需要图片�
 
 ## 一键重建和验证
 
-如果目标项目已有统一脚本，优先执行目标项目的脚本；如果使用本 skill 的 gallery，必须从 `skillRoot` 调用下面的命令：
+如果目标项目已有统一脚本，优先执行目标项目的脚本；如果使用本 skill 的 gallery，请在干净 checkout 中先完成 `npm ci` 和平台 bootstrap，再从 `skillRoot` 调用下面的命令：
 
 ```powershell
 & <skillRoot>\scripts\render-all.ps1
@@ -195,7 +195,7 @@ API --> User: response
 @enduml
 ```
 
-保存为 `diagram.puml`；需要本地 PlantUML/JAR 或项目已有渲染脚本。输出 SVG 优先用于文档，PNG 用于不支持矢量图的环境。
+保存为 `diagram.puml`；使用项目脚本或带输出目录的本地 PlantUML/JAR 命令生成文件，避免把渲染产物写回源码目录。SVG 优先用于文档，PNG 用于不支持矢量图的环境。
 
 ### Structurizr DSL
 

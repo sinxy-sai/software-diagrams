@@ -52,13 +52,17 @@ If the repository has existing work and Git state must be protected, run this pr
 ```powershell
 git status --porcelain=v2 --untracked-files=all
 git diff --cached --name-status
+git log -n 5 --format=%s
+git branch --show-current
+git rev-parse HEAD
+git remote -v
 ```
 
 Keep the output as the preflight record. Write new paths where possible. Do not run `git add -A`, `git reset`, `git restore --staged`, `git commit`, or `git push` unless the user explicitly asks for that operation.
 
 If the user explicitly asks for a commit, stage only the declared publish set. Do not use `git commit-tree`, `git update-ref`, or a temporary `GIT_INDEX_FILE` as a shortcut. If preserving an existing staged state requires an unusual index operation, stop and explain the conflict before mutating it.
 
-After the work, run the same two commands and compare the preflight and postflight records when Git state must be preserved or a commit is requested. Report any changed staged or unstaged path.
+After the work, run the same commands and compare the preflight and postflight records when Git state must be preserved or a commit is requested. Report any changed staged or unstaged path, branch, HEAD, or remote.
 
 ## 4. Render the user's project
 

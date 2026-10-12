@@ -25,6 +25,14 @@ pnpm dlx skills add sinxy-sai/software-diagrams
 
 `skills find` searches an external index and may lag behind a GitHub repository. If the exact name is not found but the repository is known, use the direct command above. Installing the skill only installs its instructions; it does not install the diagram renderers.
 
+The `version` field in an installed `skills-lock.json` is the lockfile format version, not the version of this skill. The lock entry's `computedHash` identifies the installed content. To pin a published skill revision, install a Git tag explicitly:
+
+```bash
+npx skills add sinxy-sai/software-diagrams#v0.1.0-alpha.1@software-diagrams
+```
+
+Without `#<tag>`, the CLI follows the repository's default branch and records the resolved content hash instead of a semantic release version. `skills find` ranks an external index by install count, so a low-install skill may not appear in the displayed results; direct installation remains the authoritative path when the repository is known.
+
 Use `--agent` to select an agent or `--all` to install for every supported agent. The CLI reads the root `SKILL.md`; it does not require the renderer dependencies in this repository.
 
 ### Host-specific entrypoints
