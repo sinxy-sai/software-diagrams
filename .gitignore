@@ -3,3 +3,4 @@ tools/bin/
 *.log
 .DS_Store
 Thumbs.db
+docs/private/

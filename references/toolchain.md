@@ -4,6 +4,8 @@
 
 Keep Node packages in `skillRoot/package-lock.json`. Keep PlantUML and Structurizr versions in the bootstrap scripts. Do not rely on whatever happens to be installed globally. `skillRoot` is the directory containing this skill's `SKILL.md`, not the host project's root.
 
+When working in a Git worktree, `tools/bin/` may be absent because downloaded binaries are ignored and are not copied into the worktree. The repository scripts first use `<skillRoot>/tools`, then `SOFTWARE_DIAGRAMS_TOOLS`, then the main checkout discovered from Git's common directory. This lets worktrees reuse the prepared toolchain without reinstalling it.
+
 ## Renderer mapping
 
 | Format | Runtime in this repository | Primary output |

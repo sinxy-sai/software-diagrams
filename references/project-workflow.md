@@ -8,7 +8,7 @@ Before creating files, write a small table or manifest with one row per diagram:
 
 | id | purpose | canonical source | renderer | outputs | documents | publication |
 |---|---|---|---|---|---|---|
-| `system-overview` | explain module boundaries | `docs/diagrams/sources/system-overview.mmd` | Mermaid | `docs/assets/diagrams/system-overview.svg` | `docs/architecture.md` | output |
+| `system-overview` | explain module boundaries | `docs/diagrams/sources/system-overview.mmd` | Mermaid | `docs/diagrams/rendered/system-overview.svg`, `docs/diagrams/rendered/system-overview.png` | `docs/architecture.md` | both |
 
 Every diagram must have a delivery purpose. `documents` may be an empty array for an independent deliverable. Do not create a second source file containing the same model.
 
@@ -16,26 +16,29 @@ An equivalent JSON manifest is useful for automation:
 
 ```json
 {
-  "profile": "local-source/published-artifacts",
+  "profile": "tracked-source",
   "diagrams": [
     {
       "id": "system-overview",
       "purpose": "explain module boundaries",
       "source": "docs/diagrams/sources/system-overview.mmd",
       "renderer": "mermaid",
-      "outputs": ["docs/assets/diagrams/system-overview.svg"],
+      "outputs": [
+        "docs/diagrams/rendered/system-overview.svg",
+        "docs/diagrams/rendered/system-overview.png"
+      ],
       "documents": ["docs/architecture.md"],
-      "publication": "output"
+      "publication": "both"
     }
   ]
 }
 ```
 
-The `source` is the only canonical model. A Markdown Mermaid block is canonical only when it is explicitly selected as `source`; do not also create a copied `.mmd` file.
+The `source` is the only canonical model. A Markdown Mermaid block is canonical only when it is explicitly selected as `source`; do not also create a copied `.mmd` file. Unless the user selects another profile, retain and deliver the source together with SVG and PNG outputs.
 
 ## 2. Select a publication profile
 
-Choose one profile before editing files:
+Choose one profile before editing files. The default for professional computer science diagrams is `tracked-source`, with both SVG and PNG outputs retained and published alongside the canonical source:
 
 - `tracked-source`: source and selected rendered outputs are tracked and published.
 - `local-source/published-artifacts`: source and renderer toolchain stay local; selected SVG/PNG outputs are published.
@@ -71,20 +74,19 @@ The repository's `scripts/render-all.ps1` and `scripts/render-all.sh` validate o
 For a user project:
 
 1. Run the project's own renderer if it exists.
-2. Otherwise use the pinned renderer commands from `references/toolchain.md`.
+2. Otherwise run the skill-root capability check (`npm run doctor`) and reuse the already installed pinned tools.
 3. Render every output listed in the manifest.
-4. Stop on the first renderer error and repair the canonical source.
+4. Render SVG first and PNG second. Stop on the first renderer error and repair the canonical source.
 5. Print the exact commands, renderer versions, and output paths.
 
 Keep bootstrap separate from rendering:
 
 ```powershell
-npm ci
-pwsh ./scripts/bootstrap.ps1
+npm run doctor
 pwsh ./scripts/render-all.ps1
 ```
 
-`npm ci` installs the pinned Node packages; bootstrap prepares the Java tools and native draw.io helper; render-all validates this repository's gallery. Neither command automatically discovers diagrams in another repository.
+`npm run doctor` checks the existing local dependencies without changing them. Use `npm ci` and bootstrap only for a clean checkout or a missing capability. `render-all` validates this repository's gallery; it does not automatically discover diagrams in another repository.
 
 ## 5. Validate links and assets
 

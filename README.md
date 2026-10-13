@@ -90,6 +90,61 @@ bash ./scripts/bootstrap.sh
 The bootstrap scripts put the configured PlantUML and Structurizr versions under `tools/bin/` when those files are absent. They are intentionally not committed to Git; versions and official download URLs are pinned in the scripts.
 They also rebuild the draw.io native helper if npm skipped its postinstall script.
 
+## Recommended diagram workflow
+
+For professional computer science diagrams, use one editable canonical source and keep both SVG and PNG exports:
+
+```text
+docs/diagrams/
+  sources/context.mmd
+  rendered/context.svg
+  rendered/context.png
+  diagram-manifest.json
+```
+
+1. Define the diagram's purpose, audience, abstraction level, and renderer.
+2. Write the source under `docs/diagrams/sources/`.
+3. Add the source, SVG output, and PNG output to `diagram-manifest.json`.
+4. Render SVG first and PNG second with the pinned local toolchain.
+5. Validate the manifest and inspect both exports visually.
+
+Example manifest entry:
+
+```json
+{
+  "profile": "tracked-source",
+  "diagrams": [
+    {
+      "id": "context",
+      "purpose": "explain system boundaries",
+      "source": "docs/diagrams/sources/context.mmd",
+      "renderer": "mermaid",
+      "outputs": [
+        "docs/diagrams/rendered/context.svg",
+        "docs/diagrams/rendered/context.png"
+      ],
+      "documents": [],
+      "publication": "both"
+    }
+  ]
+}
+```
+
+Use the project-local renderer from the skill root. Existing dependencies are reused; normal diagram work does not reinstall packages or download tools. Check the local capabilities first:
+
+```powershell
+npm run doctor
+npm exec -- mmdc -i docs/diagrams/sources/context.mmd -o docs/diagrams/rendered/context.svg
+npm exec -- mmdc -i docs/diagrams/sources/context.mmd -o docs/diagrams/rendered/context.png -b transparent
+npm run validate:manifest -- docs/diagrams/diagram-manifest.json <project-root>
+```
+
+Run `npm ci` and `scripts/bootstrap.ps1` only when `npm run doctor` reports a missing capability or when setting up a clean checkout.
+
+Git worktrees can reuse the prepared binaries from the main checkout. The scripts search the worktree, then `SOFTWARE_DIAGRAMS_TOOLS`, then the Git common directory for `tools/bin/`; no copy or download is performed.
+
+On macOS/Linux, use `bash ./scripts/bootstrap.sh` and the equivalent local renderer commands. The source remains the canonical artifact; never hand-edit generated SVG or PNG files.
+
 ## Render the example gallery
 
 ```powershell

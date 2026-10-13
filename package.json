@@ -4,6 +4,7 @@
   "description": "Portable skill and reproducible toolchain for creating, rendering, validating, embedding, and redrawing software diagrams in Figma/FigJam",
   "main": "index.js",
   "scripts": {
+    "doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1",
     "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
     "render:unix": "bash scripts/render-all.sh",
     "render:wasm": "node scripts/render-wasm.mjs",

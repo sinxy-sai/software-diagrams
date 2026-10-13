@@ -8,7 +8,21 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $demo = Join-Path $repoRoot 'examples/shop'
 $source = Join-Path $demo 'sources'
 $rendered = Join-Path $demo 'rendered'
-$bin = Join-Path $repoRoot 'tools/bin'
+$toolRoot = Join-Path $repoRoot 'tools'
+if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar')) -and $env:SOFTWARE_DIAGRAMS_TOOLS) {
+  $toolRoot = (Resolve-Path $env:SOFTWARE_DIAGRAMS_TOOLS).Path
+}
+if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar'))) {
+  $commonGit = (& git -C $repoRoot rev-parse --git-common-dir 2>$null)
+  if ($LASTEXITCODE -eq 0 -and $commonGit) {
+    $commonPath = $commonGit.Trim()
+    if (-not [IO.Path]::IsPathRooted($commonPath)) { $commonPath = Join-Path $repoRoot $commonPath }
+    $commonRoot = (Resolve-Path $commonPath).Path
+    $candidate = Join-Path (Split-Path $commonRoot -Parent) 'tools'
+    if (Test-Path (Join-Path $candidate 'bin/plantuml.jar')) { $toolRoot = $candidate }
+  }
+}
+$bin = Join-Path $toolRoot 'bin'
 $structurizr = Join-Path $bin 'structurizr/structurizr.bat'
 $plantuml = Join-Path $bin 'plantuml.jar'
 $drawio = Join-Path $repoRoot 'node_modules/drawio-headless/vendor/drawio-headless.exe'
