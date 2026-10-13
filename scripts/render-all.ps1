@@ -3,34 +3,22 @@ $PSNativeCommandUseErrorActionPreference = $true
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new()
 $OutputEncoding = [Console]::OutputEncoding
 $env:PYTHONIOENCODING = 'utf-8'
+. (Join-Path $PSScriptRoot 'toolchain.ps1')
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $demo = Join-Path $repoRoot 'examples/shop'
 $source = Join-Path $demo 'sources'
 $rendered = Join-Path $demo 'rendered'
-$toolRoot = Join-Path $repoRoot 'tools'
-if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar')) -and $env:SOFTWARE_DIAGRAMS_TOOLS) {
-  $toolRoot = (Resolve-Path $env:SOFTWARE_DIAGRAMS_TOOLS).Path
-}
-if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar'))) {
-  $commonGit = (& git -C $repoRoot rev-parse --git-common-dir 2>$null)
-  if ($LASTEXITCODE -eq 0 -and $commonGit) {
-    $commonPath = $commonGit.Trim()
-    if (-not [IO.Path]::IsPathRooted($commonPath)) { $commonPath = Join-Path $repoRoot $commonPath }
-    $commonRoot = (Resolve-Path $commonPath).Path
-    $candidate = Join-Path (Split-Path $commonRoot -Parent) 'tools'
-    if (Test-Path (Join-Path $candidate 'bin/plantuml.jar')) { $toolRoot = $candidate }
-  }
-}
+$toolRoot = Resolve-SoftwareDiagramsToolRoot -SkillRoot $repoRoot
 $bin = Join-Path $toolRoot 'bin'
 $structurizr = Join-Path $bin 'structurizr/structurizr.bat'
 $plantuml = Join-Path $bin 'plantuml.jar'
 $drawio = Join-Path $repoRoot 'node_modules/drawio-headless/vendor/drawio-headless.exe'
 $puppeteerConfig = Join-Path $repoRoot 'scripts/puppeteer-ci.json'
 
-if (-not (Test-Path $plantuml)) { throw "PlantUML is missing. Run scripts/bootstrap.ps1." }
-if (-not (Test-Path (Join-Path $bin 'structurizr/structurizr.bat'))) { throw "Structurizr CLI is missing. Run scripts/bootstrap.ps1." }
-if (-not (Test-Path $drawio)) { throw "drawio-headless binary is missing. Run scripts/bootstrap.ps1 after npm ci." }
+$plantuml = Require-LocalFile -Path $plantuml -Name 'PlantUML'
+$structurizr = Require-LocalFile -Path $structurizr -Name 'Structurizr CLI'
+$drawio = Require-LocalFile -Path $drawio -Name 'drawio-headless'
 
 New-Item -ItemType Directory -Force $rendered | Out-Null
 
@@ -39,9 +27,7 @@ try {
   npm exec -- mmdc -p $puppeteerConfig -i (Join-Path $source 'mermaid-sequence.mmd') -o (Join-Path $rendered 'mermaid-sequence.svg')
   npm exec -- mmdc -p $puppeteerConfig -i (Join-Path $source 'mermaid-state.mmd') -o (Join-Path $rendered 'mermaid-state.png') -b transparent
 
-  java -jar $plantuml -tsvg -Playout=smetana (Join-Path $source 'plantuml-class.puml') (Join-Path $source 'plantuml-deployment.puml')
-  Move-Item (Join-Path $source 'plantuml-class.svg') (Join-Path $rendered 'plantuml-class.svg') -Force
-  Move-Item (Join-Path $source 'plantuml-deployment.svg') (Join-Path $rendered 'plantuml-deployment.svg') -Force
+  java -jar $plantuml -tsvg -o $rendered -Playout=smetana (Join-Path $source 'plantuml-class.puml') (Join-Path $source 'plantuml-deployment.puml')
 
   & $structurizr validate -w (Join-Path $source 'structurizr-shop.dsl')
   & $structurizr export -w (Join-Path $source 'structurizr-shop.dsl') -f plantuml -o $rendered
@@ -57,16 +43,13 @@ try {
 }
 finally { Pop-Location }
 
-@(
+Assert-OutputFiles -Root $rendered -RelativePaths @(
   'mermaid-sequence.svg', 'mermaid-state.png', 'plantuml-class.svg',
   'plantuml-deployment.svg', 'structurizr-context.svg',
   'structurizr-containers.svg', 'd2-architecture.svg',
   'd2-checkout.svg', 'graphviz-dependencies.svg', 'graphviz-states.svg',
   'drawio-architecture.svg', 'drawio-checkout.png'
-) | ForEach-Object {
-  $output = Join-Path $rendered $_
-  if (-not (Test-Path $output)) { throw "Expected output was not created: $output" }
-}
+)
 
 Write-Host "Rendered diagrams in $demo"
 Write-Host 'Output manifest:'

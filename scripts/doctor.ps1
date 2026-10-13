@@ -1,22 +1,9 @@
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new()
 $OutputEncoding = [Console]::OutputEncoding
-
 $skillRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$toolRoot = Join-Path $skillRoot 'tools'
-if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar')) -and $env:SOFTWARE_DIAGRAMS_TOOLS) {
-  $toolRoot = (Resolve-Path $env:SOFTWARE_DIAGRAMS_TOOLS).Path
-}
-if (-not (Test-Path (Join-Path $toolRoot 'bin/plantuml.jar'))) {
-  $commonGit = (& git -C $skillRoot rev-parse --git-common-dir 2>$null)
-  if ($LASTEXITCODE -eq 0 -and $commonGit) {
-    $commonPath = $commonGit.Trim()
-    if (-not [IO.Path]::IsPathRooted($commonPath)) { $commonPath = Join-Path $skillRoot $commonPath }
-    $commonRoot = (Resolve-Path $commonPath).Path
-    $candidate = Join-Path (Split-Path $commonRoot -Parent) 'tools'
-    if (Test-Path (Join-Path $candidate 'bin/plantuml.jar')) { $toolRoot = $candidate }
-  }
-}
+. (Join-Path $PSScriptRoot 'toolchain.ps1')
+$toolRoot = Resolve-SoftwareDiagramsToolRoot -SkillRoot $skillRoot
 $checks = @(
   @{ Name = 'Node.js'; Path = 'node'; Args = @('--version') },
   @{ Name = 'Java'; Path = 'java'; Args = @() },
