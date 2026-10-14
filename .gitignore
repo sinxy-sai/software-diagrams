@@ -4,3 +4,5 @@ tools/bin/
 .DS_Store
 Thumbs.db
 docs/private/
+
+.superpowers/
