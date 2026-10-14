@@ -152,7 +152,7 @@ test('executeEnsure unpacks with tar paths joined onto the tools dir, not cwd', 
   const fsx = fakeFs();
   const { calls, run } = recordingRun();
   const res = await executeEnsure(RENDERERS.structurizr, {
-    dir: DIR, fsx, run,
+    dir: DIR, fsx, run, platform: 'win32',
     fetchBuffer: async () => Buffer.from('zip-bytes'),
     ledger: empty,
   });
@@ -163,6 +163,19 @@ test('executeEnsure unpacks with tar paths joined onto the tools dir, not cwd', 
   const state = installedState(DIR, fsx);
   assert.equal(state.structurizr.brokenArtifacts, undefined);
   assert.equal(planEnsure(RENDERERS.structurizr, loadLedger(DIR, fsx), DIR).action, 'noop');
+});
+
+test('executeEnsure unpacks zips with unzip on linux, where tar cannot read them', async () => {
+  const fsx = fakeFs();
+  const { calls, run } = recordingRun();
+  const res = await executeEnsure(RENDERERS.structurizr, {
+    dir: DIR, fsx, run, platform: 'linux',
+    fetchBuffer: async () => Buffer.from('zip-bytes'),
+    ledger: empty,
+  });
+  assert.equal(res.action, 'installed');
+  assert.equal(calls[0].cmd, 'unzip');
+  assert.deepEqual(calls[0].args, ['-o', toolsPath(DIR, 'bin/structurizr-cli.zip'), '-d', toolsPath(DIR, 'bin/structurizr')]);
 });
 
 test('executeEnsure throws on a failed npm step and leaves no ledger entry', async () => {
@@ -185,13 +198,26 @@ test('unpack failure error carries the tar remedy', async () => {
   const { run } = recordingRun(1);
   await assert.rejects(
     executeEnsure(RENDERERS.structurizr, {
-      dir: DIR, fsx, run,
+      dir: DIR, fsx, run, platform: 'win32',
       fetchBuffer: async () => Buffer.from('zip-bytes'),
       ledger: empty,
     }),
     /tar is required to unpack the Structurizr CLI/,
   );
   assert.equal(fsx.files.has('/tools/installed.json'), false);
+});
+
+test('unpack failure error names unzip on linux', async () => {
+  const fsx = fakeFs();
+  const { run } = recordingRun(1);
+  await assert.rejects(
+    executeEnsure(RENDERERS.structurizr, {
+      dir: DIR, fsx, run, platform: 'linux',
+      fetchBuffer: async () => Buffer.from('zip-bytes'),
+      ledger: empty,
+    }),
+    /unzip is required to unpack the Structurizr CLI/,
+  );
 });
 
 test('executeEnsure noop touches no IO seam', async () => {

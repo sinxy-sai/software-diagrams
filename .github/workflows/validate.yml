@@ -14,6 +14,8 @@ permissions:
 jobs:
   render:
     runs-on: ubuntu-latest
+    env:
+      SOFTWARE_DIAGRAMS_TOOLS: ${{ github.workspace }}/sd-tools
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -25,5 +27,5 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: npm ci
-      - run: bash scripts/bootstrap.sh
+      - run: node scripts/sd.mjs ensure plantuml structurizr
       - run: npm run render:unix

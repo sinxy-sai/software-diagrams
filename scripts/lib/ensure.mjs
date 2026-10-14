@@ -50,7 +50,7 @@ export function planEnsure(renderer, ledger, dir) {
   return { action: 'install', steps, entryDraft };
 }
 
-export async function executeEnsure(renderer, { dir, fsx, run, fetchBuffer, ledger }) {
+export async function executeEnsure(renderer, { dir, fsx, run, fetchBuffer, ledger, platform = process.platform }) {
   const useLedger = ledger ?? loadLedger(dir, fsx);
   const plan = planEnsure(renderer, useLedger, dir);
   if (plan.action === 'noop') return { action: 'noop', entry: plan.entryDraft };
@@ -69,12 +69,20 @@ export async function executeEnsure(renderer, { dir, fsx, run, fetchBuffer, ledg
     if (step.type === 'unpack') {
       const abs = toolsPath(dir, step.dir);
       fsx.mkdirSync(abs, { recursive: true });
-      const result = run('tar', ['-xf', toolsPath(dir, step.archive), '-C', abs]);
+      // GNU tar (typical Linux) cannot extract zip; bsdtar on Windows and
+      // macOS can. unzip covers the zip archives on Linux.
+      const useUnzip = platform === 'linux' && /\.zip$/i.test(step.archive);
+      const cmd = useUnzip ? 'unzip' : 'tar';
+      const args = useUnzip
+        ? ['-o', toolsPath(dir, step.archive), '-d', abs]
+        : ['-xf', toolsPath(dir, step.archive), '-C', abs];
+      const result = run(cmd, args);
       if (result.status !== 0) {
         throw new Error(
-          `unpack failed for ${step.archive}: ${result.stderr}\n` +
-          'tar is required to unpack the Structurizr CLI. On Windows it ships with Git for Windows and Windows 10+; ' +
-          `if it is missing, unpack ${toolsPath(dir, step.archive)} into ${toolsPath(dir, step.dir)} by hand and re-run.`,
+          `unpack failed for ${step.archive} (${cmd}): ${result.stderr}\n` +
+          `${cmd} is required to unpack the Structurizr CLI. tar ships with Git for Windows and Windows 10+; ` +
+          `on Linux install unzip. ` +
+          `If it is missing, unpack ${toolsPath(dir, step.archive)} into ${abs} by hand and re-run.`,
         );
       }
       artifacts.push({ path: step.dir, bytes: 0 });
