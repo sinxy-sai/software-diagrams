@@ -38,7 +38,7 @@ export function loadLedger(dir, fsx) {
 }
 
 export function saveLedger(dir, ledger, fsx) {
-  fsx.mkdirSync(dir, { recursive: true });
+  fsx.mkdirSync(fsPath(dir), { recursive: true });
   fsx.writeFileSync(fsPath(dir, LEDGER_FILENAME), `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
 }
 
@@ -63,9 +63,9 @@ export function installedState(dir, fsx) {
   const ledger = loadLedger(dir, fsx);
   const state = {};
   for (const [id, entry] of Object.entries(ledger.entries)) {
-    const broken = entry.artifacts.filter((a) => a.path && !fsx.existsSync(fsPath(dir, a.path)));
+    const broken = (entry.artifacts ?? []).filter((a) => a.path && !fsx.existsSync(fsPath(dir, a.path)));
     state[id] = broken.length
-      ? { ...entry, brokenArtifacts: broken.map((b) => path.join(dir, b.path)) }
+      ? { ...entry, brokenArtifacts: broken.map((b) => fsPath(dir, b.path)) }
       : entry;
   }
   return state;

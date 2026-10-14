@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadLedger, saveLedger, recordInstall, isSatisfied } from '../scripts/lib/ledger.mjs';
+import { loadLedger, saveLedger, recordInstall, isSatisfied, installedState } from '../scripts/lib/ledger.mjs';
 import { RENDERERS } from '../scripts/lib/registry.mjs';
 
 function fakeFs() {
@@ -66,6 +66,34 @@ test('npm renderer with fewer installed packages than pinned is stale', () => {
   const r = isSatisfied(mmd, RENDERERS.mermaid);
   assert.equal(r.ok, false);
   assert.match(r.reason, /packages/);
+});
+
+test('installedState keeps an entry intact when every artifact exists', () => {
+  const fsx = fakeFs();
+  saveLedger('/tools', recordInstall({ schemaVersion: 1, entries: {} }, entry), fsx);
+  fsx.files.set('/tools/bin/plantuml.jar', 'jar-bytes');
+  const state = installedState('/tools', fsx);
+  assert.deepEqual(state.plantuml, entry);
+  assert.equal(state.plantuml.brokenArtifacts, undefined);
+});
+
+test('installedState flags a missing artifact with its normalized tools-dir path', () => {
+  const fsx = fakeFs();
+  saveLedger('/tools', recordInstall({ schemaVersion: 1, entries: {} }, entry), fsx);
+  const state = installedState('/tools', fsx);
+  assert.deepEqual(state.plantuml.brokenArtifacts, ['/tools/bin/plantuml.jar']);
+});
+
+test('installedState treats an entry without an artifacts field as intact, not a crash', () => {
+  const fsx = fakeFs();
+  const bare = {
+    id: 'plantuml', kind: 'jar', version: '1.2026.8', packages: [],
+    installedAt: '2026-10-14T00:00:00.000Z', hostNode: '22.0.0',
+  };
+  saveLedger('/tools', recordInstall({ schemaVersion: 1, entries: {} }, bare), fsx);
+  const state = installedState('/tools', fsx);
+  assert.deepEqual(state.plantuml, bare);
+  assert.equal(state.plantuml.brokenArtifacts, undefined);
 });
 
 test('wasm renderer reports the registry version, not the package version', () => {
