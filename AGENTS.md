@@ -1,12 +1,43 @@
 # Agent instructions
 
-This repository contains a portable software-diagrams skill. For any task that creates, edits, renders, or embeds a software engineering diagram, read [`SKILL.md`](SKILL.md) before choosing a DSL or renderer.
+This repository is an open-source agent plugin: three skills, two slash
+commands, and one Node CLI for drawing computer-science diagrams as editable
+source. It targets Claude Code, OpenAI Codex, and dsh from a single layout.
 
-Use the checked-in toolchain and platform script:
+## Layout
 
-- Windows: from `skillRoot`, run `npm ci`, then `pwsh ./scripts/bootstrap.ps1` and `pwsh ./scripts/render-all.ps1`
-- macOS/Linux: from `skillRoot`, run `npm ci`, then `bash ./scripts/bootstrap.sh` and `bash ./scripts/render-all.sh`
+- `skills/software-diagrams/` — router: vocabulary, routing, renderer selection. No procedure.
+- `skills/diagram-authoring/` — draw a new diagram, seven steps.
+- `skills/diagram-redraw/` — redraw an existing artifact into code, eight steps.
+- `commands/` — thin shells that invoke a skill; procedures never live here.
+- `scripts/sd.mjs` — the only CLI entry: `doctor`, `ensure` (and, once landed, `render`, `validate`, `reset`).
+- `scripts/lib/` — toolchain modules; `tests/` — `node --test`, zero dependencies.
+- `examples/` — decision cases at repo level, not installed.
 
-Keep diagram source files editable and reviewable. Do not rely on globally installed `dot`, `d2`, PlantUML, or Structurizr when the repository-local tools provide the same capability. Preserve source files when producing PNG/SVG outputs.
+## Rules that bind every change
 
-`agents/openai.yaml` is optional Codex metadata. It is not required for the workflow in `SKILL.md`.
+- Renderers are not preinstalled. They install lazily into exactly one
+  directory: `$SOFTWARE_DIAGRAMS_TOOLS`, else
+  `~/.cache/software-diagrams/tools/`. Never download or vendor a renderer
+  dependency into a plugin directory, a skill directory, a plugin cache, or a
+  host project.
+- A skill must stay self-contained when installed alone: reference other skills
+  by name, never by file path. `references/` belongs to the skill that owns it.
+- Shared logic lives in scripts or in deliberately duplicated short text. One
+  fact has one source: renderer versions live in the registry, path joining
+  lives in the tools module, failure verdicts in one validator.
+- The canonical source is the only editable model; generated SVG/PNG is never
+  hand-edited.
+- Pure planning functions (`planEnsure`, render-plan, manifest checks) touch no
+  fs, network, or child process; IO runs through injected collaborators so L1
+  tests need no Java, browser, or network.
+
+## Working in this repo
+
+- Tests: `npm test` (script value `node --test "tests/**/*.mjs"`). Never
+  `node --test tests/` — broken on Node 24. The test runner glob needs Node ≥ 21.
+- Environment floors and the Windows UTF-8 console diagnosis are in
+  `skills/diagram-authoring/references/compatibility.md`.
+- Git hygiene: stage exact paths, never `git add -A`; no `git reset`, history
+  rewriting, or pushing unless the owner asks; commit messages carry no
+  `Co-Authored-By` trailer.

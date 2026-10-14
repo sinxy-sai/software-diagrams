@@ -1,0 +1,22 @@
+{
+  "name": "software-diagrams",
+  "version": "0.1.0",
+  "description": "Draw professional computer-science diagrams from editable source, render SVG/PNG with lazily installed renderers, validate the asset set, and redraw existing diagrams into code.",
+  "author": {
+    "name": "sinxy-sai"
+  },
+  "homepage": "https://github.com/sinxy-sai/software-diagrams",
+  "repository": "https://github.com/sinxy-sai/software-diagrams",
+  "license": "MIT",
+  "keywords": [
+    "diagrams",
+    "architecture",
+    "uml",
+    "mermaid",
+    "plantuml",
+    "structurizr",
+    "d2",
+    "graphviz",
+    "drawio"
+  ]
+}

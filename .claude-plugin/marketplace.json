@@ -1,0 +1,14 @@
+{
+  "name": "software-diagrams",
+  "owner": {
+    "name": "sinxy-sai"
+  },
+  "plugins": [
+    {
+      "name": "software-diagrams",
+      "description": "Draw computer-science diagrams from editable source; redraw existing diagrams into code. Renderers install lazily into one findable tools directory.",
+      "category": "productivity",
+      "source": "./"
+    }
+  ]
+}

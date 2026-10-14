@@ -67,9 +67,10 @@ Do not recreate an entire existing board when a focused mutation can preserve it
 
 ## Reusable example: Mermaid BFS to FigJam
 
-When a local Mermaid source such as `examples/ai-algorithms/sources/mermaid-bfs.mmd` should become an editable FigJam teaching diagram:
+When a local Mermaid source (for example a `mermaid-bfs.mmd` flowchart) should
+become an editable FigJam teaching diagram:
 
-1. Keep `mermaid-bfs.mmd` as the canonical source and render `mermaid-bfs.png` or `mermaid-bfs.svg` locally for comparison.
+1. Keep the `.mmd` file as the canonical source and render its PNG or SVG locally for comparison.
 2. Convert the source into a supported flowchart Mermaid input with stable IDs such as `start`, `queue`, `visit`, and `done`.
 3. Load `figma-generate-diagram`, call `generate_diagram` with a descriptive name such as `Breadth-first search`, and record the returned board URL.
 4. If the user asks for highlighted layers or explanatory stickies, load `figma-use` and `figma-use-figjam`, inspect the board, and add those annotations in a separate section.

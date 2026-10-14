@@ -44,7 +44,13 @@ Choose one profile before editing files. The default for professional computer s
 - `local-source/published-artifacts`: source and renderer toolchain stay local; selected SVG/PNG outputs are published.
 - `local-only-preview`: source and outputs stay local; documents may embed them only in a local preview workflow.
 
-For every profile, record the allowed publish set. Add narrow ignore rules only when needed. `tools/bin/` and `node_modules/` are normally local toolchain paths; ignore `docs/diagrams/sources/` only for a profile that intentionally keeps canonical sources local. Never replace an existing `.gitignore` wholesale and never assume a path can be ignored safely without checking the repository.
+For every profile, record the allowed publish set. Add narrow ignore rules only
+when needed. The tools directory lives outside the repository
+(`~/.cache/software-diagrams/tools/` by default), so nothing downloaded needs a
+repo ignore rule; a renderer must never be installed inside the repo anyway.
+Ignore `docs/diagrams/sources/` only for a profile that intentionally keeps
+canonical sources local. Never replace an existing `.gitignore` wholesale and
+never assume a path can be ignored safely without checking the repository.
 
 Use `publication: source`, `output`, `both`, or `local` for each diagram to state whether the canonical source, rendered outputs, both, or neither are published. With `tracked-source`, the source is eligible for publication and `source`, `output`, or `both` may be selected; with `local-source/published-artifacts`, select `output`; with `local-only-preview`, select `local`.
 
@@ -69,24 +75,25 @@ After the work, run the same commands and compare the preflight and postflight r
 
 ## 4. Render the user's project
 
-The repository's `scripts/render-all.ps1` and `scripts/render-all.sh` validate only the checked-in `examples/shop/` gallery. Passing that gallery does not prove that a user's project diagram rendered successfully.
+The repository's `scripts/render-all.ps1` and `scripts/render-all.sh` validate
+only the checked-in gallery. Passing that gallery does not prove that a user's
+project diagram rendered successfully.
 
 For a user project:
 
 1. Run the project's own renderer if it exists.
-2. Otherwise run the skill-root capability check (`npm run doctor`) and reuse the already installed pinned tools.
+2. Otherwise run `node scripts/sd.mjs doctor`; for any renderer reported
+   `missing`, run `node scripts/sd.mjs ensure <renderer>` first. Reuse
+   `ready` renderers as they are.
 3. Render every output listed in the manifest.
-4. Render SVG first and PNG second. Stop on the first renderer error and repair the canonical source.
+4. Render SVG first and PNG second. Stop on the first renderer error and repair
+   the canonical source.
 5. Print the exact commands, renderer versions, and output paths.
 
-Keep bootstrap separate from rendering:
-
-```powershell
-npm run doctor
-pwsh ./scripts/render-all.ps1
-```
-
-`npm run doctor` checks the existing local dependencies without changing them. Use `npm ci` and bootstrap only for a clean checkout or a missing capability. `render-all` validates this repository's gallery; it does not automatically discover diagrams in another repository.
+Install and render stay separate actions: `doctor` only reads, `ensure` only
+installs, and neither changes the project being documented. `render-all`
+validates this repository's gallery; it does not automatically discover
+diagrams in another repository.
 
 ## 5. Validate links and assets
 
