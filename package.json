@@ -8,7 +8,8 @@
     "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
     "render:unix": "bash scripts/render-all.sh",
     "render:wasm": "node scripts/render-wasm.mjs",
-    "validate:manifest": "node scripts/validate-manifest.mjs"
+    "validate:manifest": "node scripts/validate-manifest.mjs",
+    "test": "node --test \"tests/**/*.mjs\""
   },
   "keywords": [
     "agent-skill",
