@@ -1,10 +1,8 @@
 # Claude Code project guidance
 
-For software engineering diagram work, read [`SKILL.md`](SKILL.md). It is the provider-neutral source of truth for DSL selection, rendering, validation, and Markdown/LaTeX embedding.
+The repository's agent instructions live in [AGENTS.md](AGENTS.md). Read it
+first. This file intentionally holds no duplicated content.
 
-Use the repository-local scripts rather than assuming global renderer installations:
-
-- Windows: `pwsh ./scripts/bootstrap.ps1` and `pwsh ./scripts/render-all.ps1`
-- macOS/Linux: `bash ./scripts/bootstrap.sh` and `bash ./scripts/render-all.sh`
-
-Keep editable diagram sources alongside generated outputs. The `agents/openai.yaml` file is Codex-only UI metadata and does not need to be loaded by Claude Code.
+Diagram work itself is driven by the bundled `software-diagrams` skill in
+`skills/`: its `SKILL.md` carries the vocabulary, routing, and authoring
+workflow, and `references/redraw.md` carries the redraw procedure.

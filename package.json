@@ -1,13 +1,50 @@
 {
   "name": "software-diagrams",
-  "version": "0.1.0",
-  "description": "Portable skill and reproducible toolchain for creating, rendering, validating, embedding, and redrawing software diagrams in Figma/FigJam",
-  "main": "index.js",
+  "version": "0.2.0",
+  "description": "Draw software diagrams as editable source and redraw existing diagrams into code. One self-contained skill with a Node CLI that installs pinned renderers lazily.",
+  "type": "module",
+  "main": "dsh-plugin.js",
+  "exports": {
+    ".": "./dsh-plugin.js"
+  },
+  "files": [
+    "skills/",
+    "commands/",
+    ".claude-plugin/",
+    ".codex-plugin/",
+    "cordis.patch.yml",
+    "dsh-plugin.js",
+    "docs/install.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-all.ps1",
-    "render:unix": "bash scripts/render-all.sh",
-    "render:wasm": "node scripts/render-wasm.mjs",
-    "validate:manifest": "node scripts/validate-manifest.mjs"
+    "test": "node --test tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
+    "test:agent": "node --test --test-isolation=none tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
+    "doctor": "node skills/software-diagrams/scripts/sd.mjs doctor"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=0.2.0",
+    "@deepseek-ai/dsh-skill": ">=0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-skill": {
+      "optional": true
+    }
   },
   "keywords": [
     "agent-skill",
@@ -22,26 +59,18 @@
     "d2",
     "graphviz",
     "drawio",
-    "figma",
-    "figjam",
-    "diagram-redrawing",
-    "sequence-diagram",
-    "component-diagram",
-    "deployment-diagram",
-    "dependency-graph",
+    "diagrams-as-code",
     "architecture-as-code",
-    "diagrams-as-code"
+    "diagram-redrawing",
+    "dsh-plugin",
+    "codex-plugin",
+    "claude-code-plugin"
   ],
-  "author": "",
+  "author": "sinxy-sai",
   "license": "MIT",
-  "type": "commonjs",
-  "dependencies": {
-    "@hpcc-js/wasm-graphviz": "^1.29.2",
-    "@terrastruct/d2": "^0.1.33",
-    "drawio-headless": "^0.4.2",
-    "@mermaid-js/mermaid-cli": "^12.0.0"
-  },
-  "overrides": {
-    "katex": "0.18.2"
+  "homepage": "https://github.com/sinxy-sai/software-diagrams",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sinxy-sai/software-diagrams.git"
   }
 }

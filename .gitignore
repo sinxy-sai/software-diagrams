@@ -1,5 +1,8 @@
 node_modules/
-tools/bin/
+.dsh/
 *.log
 .DS_Store
 Thumbs.db
+docs/private/
+
+.superpowers/

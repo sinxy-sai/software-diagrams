@@ -1,0 +1,4 @@
+# dsh bundle layer: register the software-diagrams skill provider.
+- insert:
+    - id: software-diagrams
+      name: software-diagrams

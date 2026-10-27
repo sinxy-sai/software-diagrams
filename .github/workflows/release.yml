@@ -32,12 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install pinned Java renderers
-        run: bash scripts/bootstrap.sh
-
-      - name: Render the example gallery
-        run: npm run render:unix
-
       - name: Determine release channel
         id: release_meta
         env:

@@ -1,0 +1,39 @@
+{
+  "name": "software-diagrams",
+  "version": "0.2.0",
+  "description": "Create and redraw software diagrams as editable source, then render SVG or PNG with lazily installed renderers.",
+  "author": {
+    "name": "sinxy-sai",
+    "url": "https://github.com/sinxy-sai"
+  },
+  "homepage": "https://github.com/sinxy-sai/software-diagrams",
+  "repository": "https://github.com/sinxy-sai/software-diagrams",
+  "license": "MIT",
+  "keywords": [
+    "diagrams",
+    "software-architecture",
+    "c4",
+    "uml",
+    "mermaid",
+    "plantuml",
+    "structurizr",
+    "d2",
+    "graphviz",
+    "drawio"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Software Diagrams",
+    "shortDescription": "Draw and redraw software diagrams as editable source",
+    "longDescription": "Author architecture, C4, UML, sequence, state, deployment, and dependency diagrams as editable source, then render SVG or PNG with lazily installed renderers. Redraw screenshots, whiteboard photos, draw.io files, and stale hand-maintained DSL into maintainable code.",
+    "developerName": "sinxy-sai",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/sinxy-sai/software-diagrams",
+    "defaultPrompt": [
+      "Draw a C4 container diagram of this service from the code",
+      "Redraw this whiteboard photo as editable Graphviz source",
+      "Turn this Mermaid sequence diagram into SVG and PNG"
+    ]
+  }
+}

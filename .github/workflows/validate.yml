@@ -1,4 +1,4 @@
-name: Validate diagrams
+name: Validate
 
 on:
   push:
@@ -12,18 +12,71 @@ permissions:
   contents: read
 
 jobs:
-  render:
+  test:
+    name: test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      # The manifest gate is pure structure and link checking: no renderers.
+      - name: Validate the tracked diagram manifest
+        run: node skills/software-diagrams/scripts/sd.mjs validate docs/diagram-manifest.json
+
+  render-smoke:
+    name: render-smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      SOFTWARE_DIAGRAMS_TOOLS: ${{ github.workspace }}/.tools
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '17'
-      - run: npm ci
-      - run: bash scripts/bootstrap.sh
-      - run: npm run render:unix
+
+      - name: Install dependencies
+        run: npm ci
+
+      # A fresh runner reports missing renderers, so doctor is diagnostic here.
+      - name: Check the toolchain
+        continue-on-error: true
+        run: node skills/software-diagrams/scripts/sd.mjs doctor
+
+      - name: Install Graphviz and D2
+        run: node skills/software-diagrams/scripts/sd.mjs ensure graphviz d2
+
+      # Fidelity mode is the redraw contract: neato honours the explicit pos
+      # attributes instead of re-laying the graph out. This source is the
+      # fixed-position reference figure.
+      - name: Render a fixed-position source with --fidelity
+        run: node skills/software-diagrams/scripts/sd.mjs render docs/diagrams/sources/transformer.dot --fidelity -o docs/diagrams/rendered/transformer.svg
+
+      - name: Render Graphviz source
+        run: node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/graphviz-dependencies.dot -o examples/shop/rendered/graphviz-dependencies.svg
+
+      - name: Render D2 source
+        run: node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/d2-architecture.d2 -o examples/shop/rendered/d2-architecture.svg
