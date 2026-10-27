@@ -1,7 +1,7 @@
 {
   "name": "software-diagrams",
-  "version": "0.1.0",
-  "description": "Draw professional computer-science diagrams from editable source, render SVG/PNG with lazily installed renderers, validate the asset set, and redraw existing diagrams into code.",
+  "version": "0.2.0",
+  "description": "Draw software diagrams as editable source and redraw existing diagrams into code. One self-contained skill with a Node CLI that installs pinned renderers lazily.",
   "author": {
     "name": "sinxy-sai"
   },

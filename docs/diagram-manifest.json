@@ -1,0 +1,23 @@
+{
+  "profile": "tracked-source",
+  "diagrams": [
+    {
+      "id": "transformer-architecture",
+      "purpose": "Explain the encoder-decoder Transformer architecture shown in the reference figure",
+      "source": "docs/diagrams/sources/transformer.dot",
+      "renderer": "graphviz",
+      "outputs": [
+        "docs/diagrams/rendered/transformer.svg"
+      ],
+      "documents": [],
+      "publication": "both",
+      "origin": {
+        "path": "C:\\Users\\liubingliang\\.dsh\\attachments\\v1\\objects\\22\\222e17d937a0c7dded75e764641956148804c60ae2deed8da3fd19d2da0d9cab",
+        "kind": "screenshot"
+      },
+      "supersedes": "C:\\Users\\liubingliang\\.dsh\\attachments\\v1\\objects\\22\\222e17d937a0c7dded75e764641956148804c60ae2deed8da3fd19d2da0d9cab",
+      "parity": "equivalent",
+      "parity_notes": "All blocks, groupings, residual connections, cross-attention feeds, and captions are preserved at matching coordinates. Visual deviations: Graphviz uses a fixed larger corner radius for rounded boxes, the thin Add & Norm / Linear / Softmax strips are square-cornered, and the positional-encoding symbol is the sine glyph U+223F."
+    }
+  ]
+}

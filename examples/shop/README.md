@@ -54,29 +54,33 @@ queue -> worker: consume
 
 ## Render commands
 
-The complete local pipeline is:
-
-```powershell
-& .\scripts\render-all.ps1
-```
-
-It validates Structurizr, exports its C4 views to PlantUML, renders every source, and writes the image outputs into `examples/shop/rendered/`. The project-local WASM dependencies are in the repository root `package.json`.
-
-For individual tools, use the following commands from the repository root. The gallery helper for D2 and Graphviz is intentionally fixed to these example files:
+From the repository root, install the renderers the gallery needs:
 
 ```bash
-npm exec -- mmdc -i examples/shop/sources/mermaid-sequence.mmd -o examples/shop/rendered/mermaid-sequence.svg
-node scripts/render-wasm.mjs
-npm exec -- drawio-headless render examples/shop/sources/drawio-architecture.drawio examples/shop/rendered/drawio-architecture.svg
+node skills/software-diagrams/scripts/sd.mjs ensure mermaid plantuml structurizr d2 graphviz drawio
 ```
 
-For PlantUML, use the full gallery command so generated files are moved from `sources/` into `rendered/`:
+Then render every checked-in source into `examples/shop/rendered/`:
 
-```powershell
-pwsh ./scripts/render-all.ps1
+```bash
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/mermaid-sequence.mmd -o examples/shop/rendered/mermaid-sequence.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/mermaid-state.mmd --format png -o examples/shop/rendered/mermaid-state.png
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/plantuml-class.puml -o examples/shop/rendered/plantuml-class.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/plantuml-deployment.puml -o examples/shop/rendered/plantuml-deployment.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/structurizr-shop.dsl -o examples/shop/rendered/structurizr-context.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/d2-architecture.d2 -o examples/shop/rendered/d2-architecture.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/d2-checkout.d2 -o examples/shop/rendered/d2-checkout.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/graphviz-dependencies.dot -o examples/shop/rendered/graphviz-dependencies.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/graphviz-states.dot -o examples/shop/rendered/graphviz-states.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/drawio-architecture.drawio -o examples/shop/rendered/drawio-architecture.svg
+node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/drawio-checkout.drawio --format png -o examples/shop/rendered/drawio-checkout.png
 ```
 
-Open the `.drawio` files in diagrams.net and use **File → Export as** to produce SVG, PNG or PDF. Keep the XML alongside the export as its editable source.
+The Structurizr command needs `plantuml` installed as well: it validates the workspace, exports each view to PlantUML, and renders every view into the directory holding the `-o` file, including the per-view `-key` images.
+
+Mermaid, PlantUML, and draw.io produce PNG natively (`--format png`). Graphviz, D2, and Structurizr export SVG only, and the CLI refuses a format a renderer cannot produce; rasterize an SVG outside the skill when a bitmap is genuinely required.
+
+Open the `.drawio` files in diagrams.net and use **File -> Export as** to produce SVG, PNG or PDF. Keep the XML alongside the export as its editable source.
 
 Use a Mermaid block as the canonical source when the document is meant to own the diagram. If the editable source is a separate file, reference its rendered image instead, e.g. `![Shop architecture](rendered/d2-architecture.svg)`. For LaTeX, render SVG/PDF and include with `\includesvg` or `\includegraphics`.
 
@@ -86,7 +90,7 @@ After a successful gallery render, generated outputs include:
 
 - Mermaid: `mermaid-sequence.svg`, `mermaid-state.png`
 - PlantUML: `plantuml-class.svg`, `plantuml-deployment.svg`
-- Structurizr DSL: `rendered/structurizr-context.svg`, `rendered/structurizr-containers.svg`
+- Structurizr DSL: `rendered/structurizr-context.svg`, `rendered/structurizr-containers.svg`, plus the per-view `-key` images
 - D2: `d2-architecture.svg`, `d2-checkout.svg`
 - Graphviz DOT: `graphviz-dependencies.svg`, `graphviz-states.svg`
 - draw.io XML: `drawio-architecture.svg`, `drawio-checkout.png`

@@ -1,44 +1,67 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RENDERERS, rendererFor, rendererIds } from '../scripts/lib/registry.mjs';
+import { RENDERERS, rendererFor, rendererIds, rendererForExtension, pinnedVersion } from '../skills/software-diagrams/scripts/lib/registry.mjs';
 
-test('every renderer is internally consistent', () => {
+test('every renderer declares a complete, pinned contract', () => {
   for (const id of rendererIds()) {
-    const r = RENDERERS[id];
-    assert.equal(r.id, id);
-    assert.ok(['npm', 'jar', 'wasm'].includes(r.kind), `${id} has unknown kind ${r.kind}`);
-    if (r.kind === 'npm') assert.ok(r.packages.length > 0, `${id} npm renderer has no packages`);
-    if (r.kind === 'jar') assert.match(r.url, /^https:\/\//, `${id} jar has no pinned url`);
-    if (r.kind === 'wasm') assert.ok(r.packages.length > 0, `${id} wasm renderer has no packages`);
-    assert.ok(r.formats.svg, `${id} must be able to produce SVG`);
+    const renderer = RENDERERS[id];
+    assert.equal(renderer.id, id, `${id}: id must match its key`);
+    assert.ok(['npm', 'jar'].includes(renderer.kind), `${id}: kind`);
+    assert.ok(['wasm', 'node', 'jar'].includes(renderer.runtime), `${id}: runtime`);
+    assert.ok(renderer.extensions.length > 0, `${id}: extensions`);
+    assert.equal(typeof renderer.probe, 'object', `${id}: probe is mandatory`);
+    for (const spec of renderer.packages ?? []) {
+      assert.match(spec, /@\d+\.\d+\.\d+$/, `${id}: package must be pinned exactly: ${spec}`);
+      assert.doesNotMatch(spec, /[\^~]/, `${id}: package must not carry a range: ${spec}`);
+    }
+    assert.match(pinnedVersion(renderer), /^\d+(\.\d+)+$/, `${id}: pinned version must parse`);
   }
 });
 
-test('versions are pinned exactly, no ranges', () => {
-  for (const r of rendererIds().map((id) => RENDERERS[id])) {
-    for (const spec of r.packages) {
-      assert.match(spec, /^(@[^/]+\/)?[^@]+@\d+\.\d+\.\d+$/, `${r.id}: ${spec} is not an exact pin`);
-      assert.doesNotMatch(spec, /[\^~*]/, `${r.id}: ${spec} is a range`);
-    }
-    if (r.url) assert.doesNotMatch(r.url, /latest/, `${r.id} url must not use latest`);
+test('jar renderers pin an https url, a checksum, and a download path', () => {
+  for (const renderer of Object.values(RENDERERS).filter((r) => r.kind === 'jar')) {
+    assert.match(renderer.url, /^https:\/\//, `${renderer.id}: https url`);
+    assert.match(renderer.sha256, /^[0-9a-f]{64}$/, `${renderer.id}: sha256`);
+    assert.ok(renderer.download, `${renderer.id}: download path`);
+    assert.ok(renderer.requiresJava, `${renderer.id}: jar renderers need java`);
   }
+  assert.ok(RENDERERS.plantuml.url.includes(RENDERERS.plantuml.version));
+  assert.ok(RENDERERS.structurizr.url.includes(RENDERERS.structurizr.version));
+});
+
+test('version is derived in exactly one place', () => {
+  assert.equal(pinnedVersion(RENDERERS.d2), '0.1.33');
+  assert.equal(pinnedVersion(RENDERERS.mermaid), '12.0.0');
+  assert.equal(pinnedVersion(RENDERERS.plantuml), '1.2026.8');
+  assert.throws(() => pinnedVersion({ id: 'x', kind: 'npm', packages: ['left-pad'] }), /not pinned/);
+});
+
+test('only native renderers advertise PNG', () => {
+  const png = Object.values(RENDERERS).filter((r) => r.formats.png).map((r) => r.id).sort();
+  assert.deepEqual(png, ['drawio', 'mermaid', 'plantuml']);
+  const svg = Object.values(RENDERERS).filter((r) => r.formats.svg).map((r) => r.id).sort();
+  assert.deepEqual(svg, ['d2', 'drawio', 'graphviz', 'mermaid', 'plantuml', 'structurizr']);
 });
 
 test('lookup is case-insensitive and understands aliases', () => {
-  assert.equal(rendererFor('Mermaid').id, 'mermaid');
-  assert.equal(rendererFor('mmd').id, 'mermaid');
-  assert.equal(rendererFor('graphviz-dot').id, 'graphviz');
-  assert.equal(rendererFor('structurizr-dsl').id, 'structurizr');
-  assert.equal(rendererFor('nope'), null);
+  assert.equal(rendererFor('GraphViz'), RENDERERS.graphviz);
+  assert.equal(rendererFor('  dot '), RENDERERS.graphviz);
+  assert.equal(rendererFor('puml'), RENDERERS.plantuml);
+  assert.equal(rendererFor('c4'), RENDERERS.structurizr);
+  assert.equal(rendererFor('mmd'), RENDERERS.mermaid);
+  assert.equal(rendererFor('not-a-renderer'), null);
+  assert.equal(rendererFor(undefined), null);
 });
 
-test('plantuml and structurizr are the java renderers', () => {
-  assert.equal(RENDERERS.plantuml.requiresJava, true);
-  assert.equal(RENDERERS.structurizr.requiresJava, true);
-  assert.equal(RENDERERS.mermaid.requiresJava, false);
+test('extensions map to exactly one renderer', () => {
+  assert.equal(rendererForExtension('.dot'), RENDERERS.graphviz);
+  assert.equal(rendererForExtension('.D2'), RENDERERS.d2);
+  assert.equal(rendererForExtension('.mmd'), RENDERERS.mermaid);
+  assert.equal(rendererForExtension('.drawio'), RENDERERS.drawio);
+  assert.equal(rendererForExtension('.txt'), null);
 });
 
-test('drawio is the only renderer that unpacks nothing but needs a rebuild', () => {
-  assert.deepEqual(RENDERERS.drawio.needsRebuild, true);
-  assert.equal(RENDERERS.structurizr.unpack.dir, 'bin/structurizr');
+test('structurizr is the only multi-view renderer', () => {
+  const multi = Object.values(RENDERERS).filter((r) => r.multiView).map((r) => r.id);
+  assert.deepEqual(multi, ['structurizr']);
 });

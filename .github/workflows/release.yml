@@ -32,16 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install pinned jar renderers
-        env:
-          SOFTWARE_DIAGRAMS_TOOLS: ${{ github.workspace }}/sd-tools
-        run: node scripts/sd.mjs ensure plantuml structurizr
-
-      - name: Render the example gallery
-        env:
-          SOFTWARE_DIAGRAMS_TOOLS: ${{ github.workspace }}/sd-tools
-        run: npm run render:unix
-
       - name: Determine release channel
         id: release_meta
         env:
