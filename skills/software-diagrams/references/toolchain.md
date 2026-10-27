@@ -84,6 +84,32 @@ portable across Windows, macOS, and Linux and avoids a compiler or package
 manager. A project that already standardises on native `dot` may use it, but the
 skill's own commands stay on the pinned WASM path so results are reproducible.
 
+## D2: what the pinned renderer will not do
+
+Observed on D2 0.1.33 while drawing a dense architecture figure. This is not a
+reason to avoid D2; it is the list of decisions D2 makes for you, so the source
+you write does not fight them.
+
+- **Set the layout engine.** The default (`dagre`) lays a vertical spine out
+  diagonally and routes residual loops as long arcs. `vars.d2-config.layout-engine:
+  elk` is what makes a stacked, orthogonal figure hold together.
+- **No absolute placement.** There are no coordinates, z-order, connector
+  waypoints, or per-side ports. An edge that skips a block moves the whole
+  layout; draw it as a labelled dashed callout, or split the figure in two.
+- **Nested edges clip.** An edge that leaves a container (a grid, a panel) is
+  drawn only to that container's border, and edges out of grid cells pass
+  through cells. A grid is decoration, not a routing surface.
+- **The title is the container label.** There is no title primitive: no
+  subtitle, no left alignment, and a Markdown container label loses the border.
+- **Typography defaults surprise.** Multiline plain labels are emitted bold;
+  `style.bold: false` restores regular weight, and there is no per-line weight.
+  A Markdown label defaults to a text shape unless you set `shape: rectangle`.
+- **Values are typed.** `stroke-width` must be an integer 0-15, and `constraint`
+  rejects a boolean: it must be the string `"false"`.
+- **Scope wildcards by path.** `g1.*` at the wrong nesting level creates phantom
+  nodes; write `panel.g1.*`.
+- **No BOM.** A UTF-8 BOM turns `vars` into a phantom id and duplicates ids.
+
 ## Mermaid and draw.io
 
 Both are npm renderers installed with `--prefix <tools>` and executed from
