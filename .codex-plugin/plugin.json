@@ -1,6 +1,6 @@
 {
   "name": "software-diagrams",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "description": "Create and redraw software diagrams as editable source, then render SVG or PNG with lazily installed renderers.",
   "author": {
     "name": "sinxy-sai",

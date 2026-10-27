@@ -1,6 +1,6 @@
 {
   "name": "software-diagrams",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "description": "Draw software diagrams as editable source and redraw existing diagrams into code. One self-contained skill with a Node CLI that installs pinned renderers lazily.",
   "type": "module",
   "main": "dsh-plugin.js",
