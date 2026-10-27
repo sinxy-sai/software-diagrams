@@ -2,6 +2,9 @@
 
 Thanks for helping improve the software diagrams skill.
 
+By participating in this project you agree to abide by its
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Development setup
 
 1. Install Node.js 20+ (the runtime floor), Java 17+ if you will touch PlantUML or Structurizr, and PowerShell 7 or Bash.
