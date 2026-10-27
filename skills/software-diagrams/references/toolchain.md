@@ -24,14 +24,34 @@ not match; run `ensure` to repair it.
 |---|---|---|---|---|---|
 | Mermaid | `.mmd`, `.mermaid` | Node | yes | yes | rendered through `mmdc` from the tools directory |
 | PlantUML | `.puml`, `.plantuml`, `.iuml` | Java 17+ | yes | yes | `-t<format>`; needs Java |
-| Structurizr | `.dsl` | Java 17+ | yes | no | validates, exports PlantUML views, renders each view |
-| D2 | `.d2` | Node (WASM) | yes | no | no native binary required |
-| Graphviz DOT | `.dot`, `.gv` | Node (WASM) | yes | no | supports layout engines and fidelity mode |
+| Structurizr | `.dsl` | Java 17+ | yes | yes | PNG through the exported PlantUML views |
+| D2 | `.d2` | Node (WASM) | yes | yes | PNG through the resvg rasterizer |
+| Graphviz DOT | `.dot`, `.gv` | Node (WASM) | yes | yes | PNG through the resvg rasterizer |
 | draw.io | `.drawio` | Node | yes | yes | headless renderer; needs a native rebuild |
 
-SVG is the default and is always available. Ask for a PNG only from Mermaid,
-PlantUML, or draw.io. For the others, render SVG and convert outside the skill if
-a bitmap is genuinely required — do not claim a PNG the toolchain cannot produce.
+SVG is the default and is always available. PNG is native for Mermaid, PlantUML,
+draw.io, and Structurizr; Graphviz and D2 produce it through the rasterizer below.
+Every renderer now has a bitmap, so do not fall back to "render SVG and convert
+somewhere else" — that step is part of the toolchain.
+
+## PNG rasterization
+
+Graphviz and D2 only emit SVG, so a PNG request renders the SVG and then
+rasterizes it with the pinned `resvg` module, installed into the same tools
+directory:
+
+```text
+node <skill-dir>/scripts/sd.mjs ensure resvg
+node <skill-dir>/scripts/sd.mjs render model.dot -o model.png --format png
+```
+
+`resvg` needs only Node: the package ships a prebuilt native module, so there is
+no compiler, browser, or Chromium download. It rasterizes at 96 dpi, so a
+`pt`-sized SVG (what Graphviz writes) gives a bitmap about 4/3 its nominal point
+size. It loads the system fonts the SVG names, with one compatibility shim:
+Graphviz writes sub/superscripts as the SVG 1.1 `baseline-shift` attribute, which
+resvg does not implement, so the rasterizer rewrites that attribute to `dy` on
+its own copy of the SVG. The SVG output itself is never modified.
 
 ## Fidelity mode (fixed-position reproduction)
 

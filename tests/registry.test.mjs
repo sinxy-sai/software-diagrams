@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RENDERERS, rendererFor, rendererIds, rendererForExtension, pinnedVersion } from '../skills/software-diagrams/scripts/lib/registry.mjs';
+import {
+  RENDERERS,
+  RASTERIZER,
+  rendererFor,
+  rendererIds,
+  rendererForExtension,
+  installableFor,
+  installableIds,
+  pinnedVersion,
+} from '../skills/software-diagrams/scripts/lib/registry.mjs';
 
 test('every renderer declares a complete, pinned contract', () => {
   for (const id of rendererIds()) {
@@ -36,11 +45,32 @@ test('version is derived in exactly one place', () => {
   assert.throws(() => pinnedVersion({ id: 'x', kind: 'npm', packages: ['left-pad'] }), /not pinned/);
 });
 
-test('only native renderers advertise PNG', () => {
-  const png = Object.values(RENDERERS).filter((r) => r.formats.png).map((r) => r.id).sort();
-  assert.deepEqual(png, ['drawio', 'mermaid', 'plantuml']);
-  const svg = Object.values(RENDERERS).filter((r) => r.formats.svg).map((r) => r.id).sort();
-  assert.deepEqual(svg, ['d2', 'drawio', 'graphviz', 'mermaid', 'plantuml', 'structurizr']);
+test('PNG is native for four renderers and rasterized for two', () => {
+  const rasterized = Object.values(RENDERERS)
+    .filter((renderer) => renderer.pngVia === 'resvg')
+    .map((renderer) => renderer.id)
+    .sort();
+  assert.deepEqual(rasterized, ['d2', 'graphviz']);
+  const native = Object.values(RENDERERS)
+    .filter((renderer) => renderer.formats.png && renderer.pngVia !== 'resvg')
+    .map((renderer) => renderer.id)
+    .sort();
+  assert.deepEqual(native, ['drawio', 'mermaid', 'plantuml', 'structurizr']);
+  assert.equal(RENDERERS.structurizr.pngVia, 'plantuml');
+  assert.equal(RENDERERS.mermaid.pngVia, undefined);
+
+  // The rasterizer never enters the format routing table.
+  assert.equal(rendererFor('resvg'), null);
+  assert.equal(rendererForExtension('.resvg'), null);
+  assert.equal(RASTERIZER.id, 'resvg');
+  assert.equal(RASTERIZER.rasterizer, true);
+  assert.deepEqual(RASTERIZER.forRenderers, ['graphviz', 'd2']);
+  assert.match(pinnedVersion(RASTERIZER), /^\d+\.\d+\.\d+$/);
+  assert.equal(installableFor('resvg'), RASTERIZER);
+  assert.equal(installableFor('raster'), RASTERIZER);
+  assert.equal(installableFor('dot'), RENDERERS.graphviz);
+  assert.equal(installableFor('nope'), null);
+  assert.deepEqual(installableIds(), [...rendererIds(), 'resvg']);
 });
 
 test('lookup is case-insensitive and understands aliases', () => {

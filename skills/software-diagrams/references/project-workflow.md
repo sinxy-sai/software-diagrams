@@ -101,7 +101,11 @@ node <skill-dir>/scripts/sd.mjs validate <manifest>
 
 Then perform the visual check: cropped edges, overlapping nodes, missing fonts,
 unreadable text, wrong arrow direction, excessive whitespace, and Chinese glyph
-failures. A file existing on disk is not visual validation.
+failures. A file existing on disk is not visual validation. Run the part that can
+be automated first — `node <skill-dir>/scripts/sd.mjs lint <manifest>` reports
+cropped output, text overflow, tiny type, low contrast, and overlapping shapes
+with the element it found — then inspect the image for everything the lint cannot
+see.
 
 ## 6. Report completion
 

@@ -160,12 +160,14 @@ skill directory:
 node skills/software-diagrams/scripts/sd.mjs doctor
 node skills/software-diagrams/scripts/sd.mjs ensure graphviz d2
 node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/graphviz-dependencies.dot -o examples/shop/rendered/graphviz-dependencies.svg
+node skills/software-diagrams/scripts/sd.mjs lint examples/shop/rendered/graphviz-dependencies.svg
 ```
 
 `doctor` reports each renderer as ready, stale, missing, broken, or blocked, and
 exits nonzero while any renderer is not ready; that is expected before `ensure`.
 `ensure` installs the named renderers. The `render` command must leave a
-non-empty SVG at the given output path.
+non-empty SVG at the given output path, and `lint` must parse it and print no
+errors.
 
 ## What each host reads
 

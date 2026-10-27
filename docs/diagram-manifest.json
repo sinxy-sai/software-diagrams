@@ -18,6 +18,18 @@
       "supersedes": "C:\\Users\\liubingliang\\.dsh\\attachments\\v1\\objects\\22\\222e17d937a0c7dded75e764641956148804c60ae2deed8da3fd19d2da0d9cab",
       "parity": "equivalent",
       "parity_notes": "All blocks, groupings, residual connections, cross-attention feeds, and captions are preserved at matching coordinates. Visual deviations: Graphviz uses a fixed larger corner radius for rounded boxes, the thin Add & Norm / Linear / Softmax strips are square-cornered, and the positional-encoding symbol is the sine glyph U+223F."
+    },
+    {
+      "id": "deepseek-moe-layer",
+      "purpose": "Explain how a DeepSeekMoE transformer layer routes one token through MLA, a 256-expert grouped router and one always-on shared expert (DeepSeek-V3 configuration)",
+      "source": "docs/diagrams/sources/deepseek-moe.dot",
+      "renderer": "graphviz",
+      "outputs": [
+        "docs/diagrams/rendered/deepseek-moe.svg",
+        "docs/diagrams/rendered/deepseek-moe.png"
+      ],
+      "documents": [],
+      "publication": "both"
     }
   ]
 }

@@ -8,10 +8,10 @@ layout.
 ## Layout
 
 - `skills/software-diagrams/` - the one skill: `SKILL.md` (vocabulary, routing,
-  authoring workflow), `references/` (redraw procedure, toolchain, project
-  workflow, compatibility, Figma handoff), and the CLI below.
+  authoring workflow), `references/` (redraw procedure, figure design, toolchain,
+  project workflow, compatibility, Figma handoff), and the CLI below.
 - `skills/software-diagrams/scripts/sd.mjs` - the only CLI entry: `doctor`,
-  `ensure`, `render`, `validate`, `reset`.
+  `ensure`, `render`, `lint`, `validate`, `reset`.
 - `skills/software-diagrams/scripts/lib/` - toolchain modules; `tests/` -
   `node --test`, zero dependencies.
 - `commands/` - thin shells that invoke the skill; procedures never live here.

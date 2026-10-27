@@ -56,6 +56,53 @@ function writeSvg(fsx, output, svg) {
   fsx.writeFileSync(output, svg, 'utf8');
 }
 
+const RASTER_MODULE = '@resvg/resvg-js';
+
+/**
+ * Graphviz writes HTML-label sub/superscripts as SVG 1.1 `baseline-shift`
+ * attributes. resvg does not implement that attribute, so it would flatten every
+ * `h_t`, `s(i,t)` and `y_t` onto one baseline. `dy` is supported, so the shim
+ * rewrites the attribute on a copy of the SVG; the rendered bitmap then matches
+ * what a browser shows, and the SVG output stays untouched.
+ */
+function normalizeBaselineShift(svg) {
+  return svg
+    .replace(/\sbaseline-shift="sub"/g, ' dy="0.30em"')
+    .replace(/\sbaseline-shift="super"/g, ' dy="-0.45em"');
+}
+
+/**
+ * Rasterize an SVG string with the pinned resvg module.
+ *
+ * Graphviz and D2 only emit SVG, so a PNG request is an SVG render followed by
+ * this step. resvg loads the system fonts the SVG names, which keeps the bitmap
+ * consistent with the vector on every platform; it needs no browser.
+ */
+async function rasterizeSvg(svg, { dir, load }) {
+  let mod;
+  try {
+    mod = await load(dir, RASTER_MODULE);
+  } catch (error) {
+    throw new Error(
+      `PNG output needs the resvg rasterizer, which is not installed (${error.message})\n` +
+        'Install it with: node <skill-dir>/scripts/sd.mjs ensure resvg',
+    );
+  }
+  if (typeof mod.Resvg !== 'function') {
+    throw new Error(`${RASTER_MODULE} does not export Resvg; run ensure resvg to repair the install`);
+  }
+  const image = new mod.Resvg(normalizeBaselineShift(svg), {
+    fitTo: { mode: 'original' },
+    font: { loadSystemFonts: true },
+  });
+  return Buffer.from(image.render().asPng());
+}
+
+function writePng(fsx, output, png) {
+  fsx.mkdirSync(path.dirname(output), { recursive: true });
+  fsx.writeFileSync(output, png);
+}
+
 /** PlantUML writes <stem>.<format> into its output directory; move it if asked. */
 function renderPlantUml({ jar, source, output, format, run, fsx }) {
   const outDir = path.dirname(output);
@@ -109,6 +156,10 @@ export async function executeRender(renderer, options) {
       layoutEngine,
       fixed ? { nop: typeof fixed === 'number' ? fixed : 1 } : undefined,
     );
+    if (format === 'png') {
+      writePng(fsx, target, await rasterizeSvg(svg, { dir, load }));
+      return { outputs: [target], engine: layoutEngine, nop: fixed ?? null, rasterized: 'resvg' };
+    }
     writeSvg(fsx, target, svg);
     return { outputs: [target], engine: layoutEngine, nop: fixed ?? null };
   }
@@ -118,6 +169,10 @@ export async function executeRender(renderer, options) {
     const d2 = new D2();
     const compiled = await d2.compile(fsx.readFileSync(source, 'utf8'));
     const svg = await d2.render(compiled.diagram, compiled.renderOptions);
+    if (format === 'png') {
+      writePng(fsx, target, await rasterizeSvg(svg, { dir, load }));
+      return { outputs: [target], engine: 'd2', nop: null, rasterized: 'resvg' };
+    }
     writeSvg(fsx, target, svg);
     return { outputs: [target], engine: 'd2', nop: null };
   }

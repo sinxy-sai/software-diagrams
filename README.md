@@ -19,8 +19,10 @@ table, and both procedures: Structurizr for C4 (one model, many views), PlantUML
 for precise UML, Mermaid for documentation-first flows, Graphviz for dependency
 and call graphs, D2 for styled architecture views, draw.io for drag-and-drop.
 
-Every diagram is delivered as **canonical source + SVG**, and as a PNG only
-where the renderer produces one natively. Generated images are never hand-edited.
+Every diagram is delivered as **canonical source + SVG**, with a PNG where the
+surface needs one: natively from Mermaid, PlantUML, draw.io, and Structurizr, and
+through the pinned `resvg` rasterizer for Graphviz and D2. Generated images are
+never hand-edited.
 
 ## Install
 
@@ -43,10 +45,11 @@ From a local clone: `claude --plugin-dir .`
 Nothing is downloaded at plugin install time. Each renderer arrives the first
 time a diagram needs it, into one directory you can open in a file manager.
 
-The CLI at `skills/software-diagrams/scripts/sd.mjs` has five commands:
+The CLI at `skills/software-diagrams/scripts/sd.mjs` has six commands:
 `doctor` (what is really usable), `ensure` (install pinned renderers),
-`render` (one source to SVG or PNG), `validate` (a diagram manifest and its
-links), and `reset --yes` (delete the tools directory).
+`render` (one source to SVG or PNG), `lint` (visual defects in a render),
+`validate` (a diagram manifest and its links), and `reset --yes` (delete the
+tools directory).
 
 ```
 node skills/software-diagrams/scripts/sd.mjs doctor        # ready | stale | missing | broken | blocked
@@ -60,7 +63,8 @@ The tools directory survives plugin upgrades, records what it installed in
 plugin cache, skill directory, or your project.
 
 Requirements: Node.js 20+ everywhere; Java 17+ only for PlantUML and
-Structurizr.
+Structurizr. PNG from Graphviz or D2 needs the `resvg` rasterizer
+(`ensure resvg`), which is Node-only.
 
 ## Layout
 

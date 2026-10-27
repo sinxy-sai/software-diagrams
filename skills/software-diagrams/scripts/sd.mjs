@@ -4,6 +4,7 @@
 //   doctor                 what is really usable, and where renderers live
 //   ensure <id>|--all      install pinned renderers into the tools directory
 //   render <source> ...    render one canonical source to SVG (or PNG)
+//   lint <svg|manifest>    report visual defects in rendered output
 //   validate <manifest>    check a diagram manifest's structure and links
 //   reset [--yes]          delete the tools directory
 //
@@ -15,7 +16,16 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-import { RENDERERS, rendererFor, rendererIds, rendererForExtension, pinnedVersion } from './lib/registry.mjs';
+import {
+  RENDERERS,
+  RASTERIZER,
+  rendererFor,
+  rendererIds,
+  rendererForExtension,
+  installableFor,
+  installableIds,
+  pinnedVersion,
+} from './lib/registry.mjs';
 import {
   chooseToolsDir,
   findProjectRoot,
@@ -27,6 +37,7 @@ import { probeRenderer } from './lib/probe.mjs';
 import { executeEnsure } from './lib/ensure.mjs';
 import { executeRender, outputPathFor, supportedFormats } from './lib/render.mjs';
 import { validateManifest } from './lib/manifest.mjs';
+import { lintSvg } from './lib/lint.mjs';
 import { checkJava, makeRun } from './lib/run.mjs';
 
 const USAGE = `usage: node sd.mjs <command>
@@ -40,11 +51,15 @@ const USAGE = `usage: node sd.mjs <command>
       --nop [1|2]              keep explicit positions (Graphviz neato mode)
       --fidelity               shorthand for --engine neato --nop
       --renderer <id>          override renderer detection
+  lint <file.svg|manifest>... visual lint of rendered output
+      --strict                 exit non-zero on warnings as well as errors
+      --json                   print findings as JSON
   validate <manifest>        validate a diagram manifest and its links
       --root <dir>             project root (default: the git root above the manifest)
   reset [--yes]              delete the tools directory
 
 Renderers: ${rendererIds().join(', ')}
+Rasterizer: resvg (PNG output for graphviz and d2)
 Tools directory: $${TOOLS_DIR_ENV}, else ~/.cache/software-diagrams/tools, else a
 writable workspace or temp directory.`;
 
@@ -171,6 +186,14 @@ export async function main(argv = [], options = {}) {
       if (status !== 'ready') allReady = false;
       log(`${id.padEnd(11)} ${status.padEnd(9)} ${detail}`);
     }
+    // The rasterizer is advisory: it is only needed for PNG output from the two
+    // SVG-only renderers, so it never flips doctor's overall verdict.
+    const raster = probeRenderer(RASTERIZER, chosen.dir, fsx);
+    log(
+      `${RASTERIZER.id.padEnd(11)} ${(raster.ok ? 'ready' : 'missing').padEnd(9)} ${
+        raster.ok ? raster.detail : `PNG for graphviz and d2; install with ensure ${RASTERIZER.id}`
+      }`,
+    );
     log('\ninstall one:  sd.mjs ensure <renderer>');
     log('install all:  sd.mjs ensure --all');
     return allReady ? 0 : 1;
@@ -192,12 +215,12 @@ export async function main(argv = [], options = {}) {
 
     const targets = [];
     if (argv.includes('--all')) {
-      for (const id of rendererIds()) targets.push(RENDERERS[id]);
+      for (const id of installableIds()) targets.push(id === RASTERIZER.id ? RASTERIZER : RENDERERS[id]);
     } else {
       for (const name of argv) {
-        const renderer = rendererFor(name);
+        const renderer = installableFor(name);
         if (!renderer) {
-          logErr(`unknown renderer: ${name}\nknown renderers: ${rendererIds().join(', ')}`);
+          logErr(`unknown renderer: ${name}\nknown renderers: ${installableIds().join(', ')}`);
           return 2;
         }
         targets.push(renderer);
@@ -311,6 +334,16 @@ export async function main(argv = [], options = {}) {
         return 1;
       }
     }
+    if (format === 'png' && renderer.pngVia === 'resvg') {
+      const raster = probeRenderer(RASTERIZER, chosen.dir, fsx);
+      if (!raster.ok) {
+        logErr(
+          `${renderer.id} can only emit PNG through the resvg rasterizer, which is not usable: ${raster.reason}\n` +
+            `install it with: node sd.mjs ensure ${RASTERIZER.id}`,
+        );
+        return 1;
+      }
+    }
 
     let engine = engineFlag.value;
     let nop = null;
@@ -366,11 +399,86 @@ export async function main(argv = [], options = {}) {
       if (result.nop) log(`mode: engine ${result.engine}, nop ${result.nop} (explicit positions preserved)`);
       else if (renderer.id === 'graphviz') log(`mode: engine ${result.engine}`);
       log(`renderer: ${renderer.id} ${pinnedVersion(renderer)}`);
+      if (result.rasterized) log(`rasterizer: ${result.rasterized} ${pinnedVersion(RASTERIZER)}`);
       return 0;
     } catch (error) {
       logErr(error.message);
       return 1;
     }
+  }
+
+  function lint(argv) {
+    const strict = takeBool(argv, ['--strict']);
+    const json = takeBool(argv, ['--json']);
+    if (argv.length === 0) {
+      logErr('usage: sd.mjs lint <file.svg|manifest>... [--strict] [--json]');
+      return 2;
+    }
+
+    const targets = [];
+    let missing = 0;
+    for (const arg of argv) {
+      const absolute = path.resolve(cwd, arg);
+      if (!fsx.existsSync(absolute)) {
+        logErr(`file does not exist: ${arg}`);
+        return 1;
+      }
+      const extension = path.extname(absolute).toLowerCase();
+      if (extension === '.svg') {
+        targets.push({ file: absolute, svg: fsx.readFileSync(absolute, 'utf8') });
+        continue;
+      }
+      if (extension !== '.json') {
+        logErr(`lint reads .svg files and diagram manifests, not ${extension || '(no extension)'}: ${arg}`);
+        return 2;
+      }
+      let manifest;
+      try {
+        manifest = JSON.parse(fsx.readFileSync(absolute, 'utf8'));
+      } catch (error) {
+        logErr(`invalid JSON in ${arg}: ${error.message}`);
+        return 1;
+      }
+      const root = findProjectRoot(path.dirname(absolute), fsx);
+      for (const diagram of manifest.diagrams ?? []) {
+        for (const output of diagram.outputs ?? []) {
+          if (!/\.svg$/i.test(output)) continue;
+          const rendered = path.resolve(root, output);
+          if (!fsx.existsSync(rendered)) {
+            logErr(`error: ${output}: rendered output is missing (${diagram.id})`);
+            missing += 1;
+            continue;
+          }
+          targets.push({ file: rendered, svg: fsx.readFileSync(rendered, 'utf8'), diagram: diagram.id });
+        }
+      }
+    }
+    if (targets.length === 0) {
+      logErr('nothing to lint: no SVG outputs were found');
+      return 1;
+    }
+
+    let errors = missing;
+    let warnings = 0;
+    const report = [];
+    for (const target of targets) {
+      const relative = path.relative(cwd, target.file) || target.file;
+      const { findings, stats } = lintSvg(target.svg, { file: relative });
+      report.push({ file: relative, diagram: target.diagram ?? null, stats, findings });
+      for (const finding of findings) {
+        if (finding.severity === 'error') errors += 1;
+        else warnings += 1;
+        if (!json) logErr(`${finding.severity}: ${finding.message}`);
+      }
+    }
+
+    if (json) {
+      log(JSON.stringify({ files: report, errors, warnings }, null, 2));
+    } else {
+      log(`linted ${targets.length} file(s): ${errors} error(s), ${warnings} warning(s)`);
+    }
+    if (errors > 0 || (strict && warnings > 0)) return 1;
+    return 0;
   }
 
   function validate(argv) {
@@ -445,6 +553,7 @@ export async function main(argv = [], options = {}) {
   if (command === 'doctor') return doctor();
   if (command === 'ensure') return await ensure(rest);
   if (command === 'render') return await render(rest);
+  if (command === 'lint') return lint(rest);
   if (command === 'validate') return validate(rest);
   if (command === 'reset') return reset(rest);
 
