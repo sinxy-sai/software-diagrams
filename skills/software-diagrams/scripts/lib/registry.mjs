@@ -73,7 +73,9 @@ export const RENDERERS = {
     mainClass: 'com.structurizr.cli.StructurizrCliApplication',
     multiView: true,
     probe: { type: 'file', path: `bin/structurizr-${STRUCTURIZR.version}/lib/structurizr-cli.jar` },
-    formats: { svg: true, png: false },
+    // Every view is exported to PlantUML, so PlantUML decides the image format.
+    formats: { svg: true, png: true },
+    pngVia: 'plantuml',
     extensions: ['.dsl'],
   },
   d2: {
@@ -86,7 +88,9 @@ export const RENDERERS = {
     requiresJava: false,
     needsRebuild: false,
     probe: { type: 'npm-package', name: '@terrastruct/d2', version: '0.1.33' },
-    formats: { svg: true, png: false },
+    // D2 only emits SVG; the rasterizer turns it into a PNG afterwards.
+    formats: { svg: true, png: true },
+    pngVia: 'resvg',
     extensions: ['.d2'],
   },
   graphviz: {
@@ -99,7 +103,9 @@ export const RENDERERS = {
     requiresJava: false,
     needsRebuild: false,
     probe: { type: 'npm-package', name: '@hpcc-js/wasm-graphviz', version: '1.29.2' },
-    formats: { svg: true, png: false },
+    // Graphviz only emits SVG; the rasterizer turns it into a PNG afterwards.
+    formats: { svg: true, png: true },
+    pngVia: 'resvg',
     extensions: ['.dot', '.gv'],
   },
   drawio: {
@@ -126,9 +132,50 @@ const ALIAS_INDEX = new Map(
   ]),
 );
 
+const RESVG = {
+  version: '2.6.2',
+  packages: ['@resvg/resvg-js@2.6.2'],
+};
+
+/**
+ * The rasterizer is not a semantic format: it turns the SVG that Graphviz and D2
+ * emit into a bitmap. It installs and probes exactly like a renderer, but it
+ * never appears in the format routing table, so `rendererFor('dot')` keeps
+ * meaning Graphviz.
+ */
+export const RASTERIZER = {
+  id: 'resvg',
+  label: 'resvg (SVG to PNG)',
+  aliases: ['raster', 'rasterizer'],
+  kind: 'npm',
+  runtime: 'node',
+  packages: RESVG.packages,
+  requiresJava: false,
+  needsRebuild: false,
+  probe: { type: 'npm-package', name: '@resvg/resvg-js', version: RESVG.version },
+  formats: { svg: false, png: true },
+  extensions: [],
+  rasterizer: true,
+  forRenderers: ['graphviz', 'd2'],
+};
+
 export function rendererFor(name) {
   if (typeof name !== 'string') return null;
   return ALIAS_INDEX.get(name.trim().toLowerCase()) ?? null;
+}
+
+/** A renderer or the rasterizer, by id or alias. Used by ensure and doctor. */
+export function installableFor(name) {
+  const renderer = rendererFor(name);
+  if (renderer) return renderer;
+  if (typeof name !== 'string') return null;
+  const needle = name.trim().toLowerCase();
+  if (needle === RASTERIZER.id || RASTERIZER.aliases.includes(needle)) return RASTERIZER;
+  return null;
+}
+
+export function installableIds() {
+  return [...rendererIds(), RASTERIZER.id];
 }
 
 export function rendererIds() {

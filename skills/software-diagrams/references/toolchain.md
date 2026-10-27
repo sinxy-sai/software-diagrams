@@ -24,14 +24,34 @@ not match; run `ensure` to repair it.
 |---|---|---|---|---|---|
 | Mermaid | `.mmd`, `.mermaid` | Node | yes | yes | rendered through `mmdc` from the tools directory |
 | PlantUML | `.puml`, `.plantuml`, `.iuml` | Java 17+ | yes | yes | `-t<format>`; needs Java |
-| Structurizr | `.dsl` | Java 17+ | yes | no | validates, exports PlantUML views, renders each view |
-| D2 | `.d2` | Node (WASM) | yes | no | no native binary required |
-| Graphviz DOT | `.dot`, `.gv` | Node (WASM) | yes | no | supports layout engines and fidelity mode |
+| Structurizr | `.dsl` | Java 17+ | yes | yes | PNG through the exported PlantUML views |
+| D2 | `.d2` | Node (WASM) | yes | yes | PNG through the resvg rasterizer |
+| Graphviz DOT | `.dot`, `.gv` | Node (WASM) | yes | yes | PNG through the resvg rasterizer |
 | draw.io | `.drawio` | Node | yes | yes | headless renderer; needs a native rebuild |
 
-SVG is the default and is always available. Ask for a PNG only from Mermaid,
-PlantUML, or draw.io. For the others, render SVG and convert outside the skill if
-a bitmap is genuinely required — do not claim a PNG the toolchain cannot produce.
+SVG is the default and is always available. PNG is native for Mermaid, PlantUML,
+draw.io, and Structurizr; Graphviz and D2 produce it through the rasterizer below.
+Every renderer now has a bitmap, so do not fall back to "render SVG and convert
+somewhere else" — that step is part of the toolchain.
+
+## PNG rasterization
+
+Graphviz and D2 only emit SVG, so a PNG request renders the SVG and then
+rasterizes it with the pinned `resvg` module, installed into the same tools
+directory:
+
+```text
+node <skill-dir>/scripts/sd.mjs ensure resvg
+node <skill-dir>/scripts/sd.mjs render model.dot -o model.png --format png
+```
+
+`resvg` needs only Node: the package ships a prebuilt native module, so there is
+no compiler, browser, or Chromium download. It rasterizes at 96 dpi, so a
+`pt`-sized SVG (what Graphviz writes) gives a bitmap about 4/3 its nominal point
+size. It loads the system fonts the SVG names, with one compatibility shim:
+Graphviz writes sub/superscripts as the SVG 1.1 `baseline-shift` attribute, which
+resvg does not implement, so the rasterizer rewrites that attribute to `dy` on
+its own copy of the SVG. The SVG output itself is never modified.
 
 ## Fidelity mode (fixed-position reproduction)
 
@@ -63,6 +83,32 @@ packages from the tools directory and writes SVG. That keeps the renderer
 portable across Windows, macOS, and Linux and avoids a compiler or package
 manager. A project that already standardises on native `dot` may use it, but the
 skill's own commands stay on the pinned WASM path so results are reproducible.
+
+## D2: what the pinned renderer will not do
+
+Observed on D2 0.1.33 while drawing a dense architecture figure. This is not a
+reason to avoid D2; it is the list of decisions D2 makes for you, so the source
+you write does not fight them.
+
+- **Set the layout engine.** The default (`dagre`) lays a vertical spine out
+  diagonally and routes residual loops as long arcs. `vars.d2-config.layout-engine:
+  elk` is what makes a stacked, orthogonal figure hold together.
+- **No absolute placement.** There are no coordinates, z-order, connector
+  waypoints, or per-side ports. An edge that skips a block moves the whole
+  layout; draw it as a labelled dashed callout, or split the figure in two.
+- **Nested edges clip.** An edge that leaves a container (a grid, a panel) is
+  drawn only to that container's border, and edges out of grid cells pass
+  through cells. A grid is decoration, not a routing surface.
+- **The title is the container label.** There is no title primitive: no
+  subtitle, no left alignment, and a Markdown container label loses the border.
+- **Typography defaults surprise.** Multiline plain labels are emitted bold;
+  `style.bold: false` restores regular weight, and there is no per-line weight.
+  A Markdown label defaults to a text shape unless you set `shape: rectangle`.
+- **Values are typed.** `stroke-width` must be an integer 0-15, and `constraint`
+  rejects a boolean: it must be the string `"false"`.
+- **Scope wildcards by path.** `g1.*` at the wrong nesting level creates phantom
+  nodes; write `panel.g1.*`.
+- **No BOM.** A UTF-8 BOM turns `vars` into a phantom id and duplicates ids.
 
 ## Mermaid and draw.io
 

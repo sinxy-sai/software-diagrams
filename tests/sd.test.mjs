@@ -169,12 +169,32 @@ function graphvizLoad(calls) {
   };
 }
 
+// Answers both the source renderer and the rasterizer for `--format png`.
+function pngLoad(calls) {
+  return async (dir, name) => {
+    calls.push({ dir, name });
+    if (name === '@resvg/resvg-js') {
+      return { Resvg: class { render() { return { asPng: () => Buffer.from('PNG') }; } } };
+    }
+    return { Graphviz: { load: async () => ({ layout: () => '<svg id="graphviz"/>' }) } };
+  };
+}
+
+function seedGraphvizTool(fsx, tools) {
+  fsx.writeFileSync(
+    path.join(tools, 'node_modules', '@hpcc-js', 'wasm-graphviz', 'package.json'),
+    JSON.stringify({ version: '1.29.2' }),
+  );
+}
+
 test('no command prints usage and returns 2', async () => {
   const result = await runCli([], { env: {} });
   assert.equal(result.code, 2);
   assert.match(result.out, /usage: node sd\.mjs <command>/);
   assert.match(result.out, /doctor\s+report every renderer/);
   assert.match(result.out, /Renderers: mermaid, plantuml, structurizr, d2, graphviz, drawio/);
+  assert.match(result.out, /Rasterizer: resvg \(PNG output for graphviz and d2\)/);
+  assert.match(result.out, /lint <file\.svg\|manifest>/);
   assert.equal(result.err, '');
 });
 
@@ -210,6 +230,7 @@ test('doctor on an empty tools directory reports missing renderers and the tools
     for (const id of ['mermaid', 'plantuml', 'structurizr', 'd2', 'graphviz', 'drawio']) {
       assert.match(result.out, new RegExp(`^${id}\\s+missing\\s`, 'm'), `${id} must be missing`);
     }
+    assert.match(result.out, /^resvg\s+missing\s+PNG for graphviz and d2/m);
     assert.ok(spawn.calls.some((call) => call.command === 'java' && call.args[0] === '-version'));
     assert.equal(result.err, '');
   } finally {
@@ -271,19 +292,47 @@ test('render on a missing source returns 1', async () => {
   assert.match(result.err, /source does not exist: missing\.dot/);
 });
 
-test('render refuses a PNG that a WASM renderer cannot produce', async () => {
+test('render refuses PNG when the resvg rasterizer is missing', async () => {
   const fsx = makeFs();
+  const tools = path.join(SANDBOX, 'fake-tools-png-missing');
+  seedGraphvizTool(fsx, tools);
   fsx.writeFileSync(path.join(CWD, 'diagrams', 'architecture.dot'), 'digraph {}');
   const result = await runCli(['render', path.join('diagrams', 'architecture.dot'), '--format', 'png'], {
     cwd: CWD,
-    env: envFor(),
+    env: envFor(tools),
     fsx,
     spawn: fakeSpawn(fsx),
     tmpdir: SANDBOX,
   });
-  assert.equal(result.code, 2);
-  assert.match(result.err, /Graphviz \(WASM\) cannot render PNG; it supports svg\./);
+  assert.equal(result.code, 1);
+  assert.match(result.err, /graphviz can only emit PNG through the resvg rasterizer, which is not usable/);
+  assert.match(result.err, /ensure resvg/);
   assert.equal(result.out, '');
+});
+
+test('render --format png reports the rasterizer it used', async () => {
+  const fsx = makeFs();
+  const tools = path.join(SANDBOX, 'fake-tools-png');
+  seedGraphvizTool(fsx, tools);
+  fsx.writeFileSync(
+    path.join(tools, 'node_modules', '@resvg', 'resvg-js', 'package.json'),
+    JSON.stringify({ version: '2.6.2' }),
+  );
+  fsx.writeFileSync(path.join(CWD, 'diagrams', 'architecture.dot'), 'digraph { a -> b; }');
+  const calls = [];
+  const result = await runCli(['render', path.join('diagrams', 'architecture.dot'), '--format', 'png'], {
+    cwd: CWD,
+    env: envFor(tools),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+    load: pngLoad(calls),
+  });
+  assert.equal(result.code, 0, result.err);
+  assert.equal(fsx.files.get(norm(path.join(CWD, 'diagrams', 'architecture.png'))), 'PNG');
+  assert.match(result.out, /^rendered diagrams[\\/]architecture\.png \(\d+ B\)$/m);
+  assert.match(result.out, /^rasterizer: resvg 2\.6\.2$/m);
+  assert.ok(calls.some((call) => call.name === '@resvg/resvg-js'));
 });
 
 test('render writes SVG for graphviz through the injected loader', async () => {
@@ -454,6 +503,99 @@ test('reset accepts SOFTWARE_DIAGRAMS_RESET_CONFIRM as confirmation', async () =
   assert.equal(result.code, 0);
   assert.ok(result.out.includes(`deleted ${TOOLS}`));
   assert.equal(fsx.existsSync(TOOLS), false);
+});
+
+test('lint reports a clean render and exits 0', async () => {
+  const fsx = makeFs();
+  fsx.writeFileSync(
+    path.join(CWD, 'render.svg'),
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><text x="20" y="60" font-size="14" fill="#111">ok</text></svg>',
+  );
+  const result = await runCli(['lint', 'render.svg'], {
+    cwd: CWD,
+    env: envFor(),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+  });
+  assert.equal(result.code, 0, result.err);
+  assert.match(result.out, /^linted 1 file\(s\): 0 error\(s\), 0 warning\(s\)$/m);
+  assert.equal(result.err, '');
+});
+
+test('lint warns on tiny type and --strict turns the warning into a failure', async () => {
+  const fsx = makeFs();
+  fsx.writeFileSync(
+    path.join(CWD, 'tiny.svg'),
+    '<svg viewBox="0 0 200 100"><text x="20" y="60" font-size="4" fill="#111">tiny</text></svg>',
+  );
+  const options = { cwd: CWD, env: envFor(), fsx, spawn: fakeSpawn(fsx), tmpdir: SANDBOX };
+  const relaxed = await runCli(['lint', 'tiny.svg'], options);
+  assert.equal(relaxed.code, 0, relaxed.err);
+  assert.match(relaxed.err, /^warning: tiny\.svg: .*has font-size 4 below the 6-unit minimum$/m);
+  assert.match(relaxed.out, /0 error\(s\), 1 warning\(s\)/);
+
+  const strict = await runCli(['lint', 'tiny.svg', '--strict'], options);
+  assert.equal(strict.code, 1);
+});
+
+test('lint reports cropped output as an error', async () => {
+  const fsx = makeFs();
+  fsx.writeFileSync(
+    path.join(CWD, 'cropped.svg'),
+    '<svg viewBox="0 0 100 100"><text x="10" y="50" font-size="12" fill="#111">a very long line of text that runs past the right edge</text></svg>',
+  );
+  const result = await runCli(['lint', 'cropped.svg'], {
+    cwd: CWD,
+    env: envFor(),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.err, /^error: cropped\.svg: .*past the right edge of the viewBox$/m);
+});
+
+test('lint rejects a missing file and an unsupported extension', async () => {
+  const fsx = makeFs();
+  fsx.writeFileSync(path.join(CWD, 'notes.txt'), 'no diagram');
+  const missing = await runCli(['lint', 'missing.svg'], {
+    cwd: CWD,
+    env: envFor(),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+  });
+  assert.equal(missing.code, 1);
+  assert.match(missing.err, /file does not exist: missing\.svg/);
+
+  const unsupported = await runCli(['lint', 'notes.txt'], {
+    cwd: CWD,
+    env: envFor(),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+  });
+  assert.equal(unsupported.code, 2);
+  assert.match(unsupported.err, /lint reads \.svg files and diagram manifests, not \.txt/);
+});
+
+test('lint accepts a manifest and lints every SVG output it lists', async () => {
+  const fsx = makeFs();
+  seedValidManifestProject(fsx);
+  fsx.writeFileSync(
+    path.join(CWD, 'docs', 'diagrams', 'rendered', 'context.svg'),
+    '<svg viewBox="0 0 100 100"><text x="10" y="40" font-size="12" fill="#111">context</text></svg>',
+  );
+  const result = await runCli(['lint', path.join('docs', 'diagram-manifest.json')], {
+    cwd: CWD,
+    env: envFor(),
+    fsx,
+    spawn: fakeSpawn(fsx),
+    tmpdir: SANDBOX,
+  });
+  assert.equal(result.code, 0, result.err);
+  assert.match(result.out, /^linted 1 file\(s\): 0 error\(s\), 0 warning\(s\)$/m);
 });
 
 test('render writes every structurizr view into a named output directory', async () => {

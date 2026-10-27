@@ -7,7 +7,8 @@ description: Draw computer-science diagrams as editable source, and redraw exist
 
 Vocabulary, renderer choice, and the authoring workflow. Redrawing an existing
 artifact is a separate procedure: read [references/redraw.md](references/redraw.md)
-before starting one.
+before starting one. Visual language is a design decision, not a default: choose
+a direction from [references/figure-design.md](references/figure-design.md).
 
 ## Locate the toolchain
 
@@ -50,6 +51,7 @@ survives upgrades and can be deleted with `reset --yes`.
 | Something to explain, and no existing picture | the workflow below |
 | An existing artifact to convert: screenshot, whiteboard photo, PNG, PPT/PPTX, draw.io XML, stale DSL | [references/redraw.md](references/redraw.md) |
 | Only a question about which renderer fits | the table below |
+| Only a question about what the figure should look like | [references/figure-design.md](references/figure-design.md) |
 
 A request that both explains something new and carries an old picture forward is
 a redraw: recovering the old structure is the blocking step.
@@ -103,6 +105,11 @@ handoff.
   stable ASCII ids, boundaries and direction, relationship labels and protocols,
   layout/theme/limited semantic color, legend and notes. Use shape, line style,
   and text as well as color; split an overloaded view instead of shrinking text.
+  Choose the visual language on purpose: name a direction or exemplar from
+  [references/figure-design.md](references/figure-design.md) and write its
+  five-line brief (claim, audience, direction, budget, omissions). The skill
+  imposes no house style; a direction you cannot name is a default you did not
+  choose.
 
 Per-family rules: state diagrams mark initial and final states and every
 transition condition; algorithms show inputs, state changes, invariants, and
@@ -113,13 +120,15 @@ diagram supports the explanation rather than replacing it.
 ### 5. Render
 
 - **Input:** the source file.
-- **Output:** SVG first; PNG only when the renderer produces it natively.
+- **Output:** SVG first; PNG when the surface needs a bitmap.
 - **Checkpoint:** `doctor` shows the renderer `ready`; run `ensure` first if it
   does not. Run `render` and keep the exact command in the report. Stop on the
   first renderer error and repair the source.
 
-Graphviz, D2, and Structurizr export SVG only. Do not promise a bitmap those
-renderers cannot make; Mermaid, PlantUML, and draw.io produce PNG natively.
+PNG is available from every renderer: natively from Mermaid, PlantUML, draw.io,
+and Structurizr, and through the pinned `resvg` rasterizer for Graphviz and D2
+(`ensure resvg` once). Keep the SVG as the reviewable artifact; the bitmap is a
+convenience for the surface that will show it.
 
 ### 6. Pass the gates
 
@@ -128,6 +137,18 @@ renderers cannot make; Mermaid, PlantUML, and draw.io produce PNG natively.
 ```text
 node <skill-dir>/scripts/sd.mjs validate <manifest>
 ```
+
+**Visual, mechanically** — the structural gate cannot see the picture:
+
+```text
+node <skill-dir>/scripts/sd.mjs lint <manifest|render.svg>
+```
+
+`lint` reads the rendered SVG and reports cropped output, text wider than the box
+that owns it, type below 6pt, low text/background contrast, and overlapping
+shapes, naming the element it found. `--strict` turns warnings into a failure;
+`--json` is for a script. Fix the source and render again — a clean lint is not a
+substitute for looking at the image.
 
 `semantic` — read the model against the question: the diagram answers its one
 named question; every expected node and actor is present; each arrow points the
@@ -138,7 +159,11 @@ vocabulary; color carries meaning only with a legend; no view is overloaded.
 `visual` — open the rendered SVG and PNG. Check cropped edges, overlapping
 nodes, text size against a real render, arrowheads, excessive whitespace, and
 font failures including Chinese glyphs. A file on disk is not visual validation;
-if you did not open the image, say so.
+if you did not open the image, say so. When nobody art-directs the figure, run
+the three-round critique in
+[references/figure-design.md](references/figure-design.md) — structure at source
+level, hierarchy at 25%, craft at 200% — and name the exemplar you compared
+against.
 
 ### 7. Report the asset set
 
@@ -163,6 +188,7 @@ agree with the profile.
 ## References
 
 - [references/redraw.md](references/redraw.md) — the eight-step redraw procedure and parity gate
+- [references/figure-design.md](references/figure-design.md) — visual-language shelf, five-line style brief, three-round self-critique
 - [references/toolchain.md](references/toolchain.md) — renderer support matrix, fidelity mode, command forms
 - [references/project-workflow.md](references/project-workflow.md) — contract table, profiles, Git preflight, delivery checks
 - [references/compatibility.md](references/compatibility.md) — host and OS requirements, sandbox notes, Windows UTF-8

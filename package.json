@@ -21,8 +21,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
-    "test:agent": "node --test --test-isolation=none tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
+    "test": "node --test tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/lint.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
+    "test:agent": "node --test --test-isolation=none tests/registry.test.mjs tests/tools-dir.test.mjs tests/ledger.test.mjs tests/probe.test.mjs tests/ensure.test.mjs tests/render.test.mjs tests/lint.test.mjs tests/manifest.test.mjs tests/sd.test.mjs tests/plugin.test.mjs",
     "doctor": "node skills/software-diagrams/scripts/sd.mjs doctor"
   },
   "dsh": {

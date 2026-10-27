@@ -91,6 +91,43 @@ function graphvizLoader(calls) {
   };
 }
 
+// A loader that can answer both the source renderer and the rasterizer, so a
+// PNG render can be driven entirely in-process.
+const BASELINE_SVG = '<svg><text baseline-shift="sub">t</text></svg>';
+function pngLoader(calls, { svg = BASELINE_SVG } = {}) {
+  return async (dir, name) => {
+    calls.push({ step: 'load', dir, name });
+    if (name === '@resvg/resvg-js') {
+      return {
+        Resvg: class {
+          constructor(source, options) {
+            calls.push({ step: 'resvg', source, options });
+          }
+          render() {
+            return { asPng: () => Buffer.from('PNGDATA') };
+          }
+        },
+      };
+    }
+    if (name === '@hpcc-js/wasm-graphviz') {
+      return { Graphviz: { load: async () => ({ layout: () => svg }) } };
+    }
+    if (name === '@terrastruct/d2') {
+      return {
+        D2: class {
+          async compile() {
+            return { diagram: {}, renderOptions: {} };
+          }
+          async render() {
+            return svg;
+          }
+        },
+      };
+    }
+    throw new Error(`unexpected module ${name}`);
+  };
+}
+
 // Simulate PlantUML: java -jar writes <outDir>/<stem>.<format> and returns 0.
 function plantumlRun(calls, fsx, { write = true } = {}) {
   return (command, args) => {
@@ -115,8 +152,8 @@ test('outputPathFor defaults beside the source and honours an explicit output', 
 });
 
 test('supportedFormats lists only the formats a renderer advertises', () => {
-  assert.deepEqual(supportedFormats(RENDERERS.graphviz), ['svg']);
-  assert.deepEqual(supportedFormats(RENDERERS.structurizr), ['svg']);
+  assert.deepEqual(supportedFormats(RENDERERS.graphviz), ['svg', 'png']);
+  assert.deepEqual(supportedFormats(RENDERERS.structurizr), ['svg', 'png']);
   assert.deepEqual(supportedFormats(RENDERERS.mermaid), ['svg', 'png']);
   assert.deepEqual(supportedFormats({ formats: { svg: true, png: false, webp: true } }), ['svg', 'webp']);
   assert.deepEqual(supportedFormats({ formats: {} }), []);
@@ -124,35 +161,24 @@ test('supportedFormats lists only the formats a renderer advertises', () => {
 
 test('an unsupported format is rejected with the renderer and a remedy', async () => {
   await assert.rejects(
-    executeRender(RENDERERS.graphviz, {
+    executeRender({ id: 'fake', label: 'Fake renderer', formats: { svg: true } }, {
       dir: DIR,
-      source: path.join(WORK, 'context.dot'),
+      source: path.join(WORK, 'context.svg'),
       format: 'png',
       fsx: makeFs(),
       run: noSpawn,
     }),
-    /Graphviz \(WASM\) cannot render PNG; it supports svg\. Use the SVG output and rasterize it separately if a bitmap is required\./,
+    /Fake renderer cannot render PNG; it supports svg\. Use the SVG output and rasterize it separately if a bitmap is required\./,
   );
   await assert.rejects(
     executeRender(RENDERERS.structurizr, {
       dir: DIR,
       source: path.join(WORK, 'workspace.dsl'),
-      format: 'png',
-      fsx: makeFs(),
-      run: noSpawn,
-    }),
-    /Structurizr CLI cannot render PNG; it supports svg\./,
-  );
-  // A renderer with more than one format points at --format instead.
-  await assert.rejects(
-    executeRender({ id: 'fake', label: 'Fake renderer', formats: { svg: true, png: true } }, {
-      dir: DIR,
-      source: path.join(WORK, 'context.svg'),
       format: 'jpg',
       fsx: makeFs(),
       run: noSpawn,
     }),
-    /Fake renderer cannot render JPG; it supports svg, png\. Pass --format with one of the supported values\./,
+    /Structurizr CLI cannot render JPG; it supports svg, png\. Pass --format with one of the supported values\./,
   );
 });
 
@@ -263,6 +289,105 @@ test('d2 compiles and renders through the WASM loader in-process', async () => {
     { step: 'render', diagram: { name: 'checkout' }, options: { layout: 'elk', pad: 10 } },
   ]);
   assert.equal(fsx.files.get(norm(target)), '<svg id="d2"/>');
+});
+
+test('graphviz PNG is a svg render followed by the resvg rasterizer', async () => {
+  const source = path.join(WORK, 'context.dot');
+  const fsx = makeFs({ [source]: 'digraph {}' });
+  const calls = [];
+  const result = await executeRender(RENDERERS.graphviz, {
+    dir: DIR,
+    source,
+    format: 'png',
+    fsx,
+    run: noSpawn,
+    load: pngLoader(calls),
+  });
+  const target = path.join(WORK, 'context.png');
+  assert.deepEqual(result, { outputs: [target], engine: 'dot', nop: null, rasterized: 'resvg' });
+  assert.equal(fsx.files.get(norm(target)), 'PNGDATA');
+  const rasterize = calls.find((call) => call.step === 'resvg');
+  assert.match(rasterize.source, /dy="0\.30em"/, 'baseline-shift is rewritten to dy for resvg');
+  assert.doesNotMatch(rasterize.source, /baseline-shift/);
+  assert.deepEqual(rasterize.options, { fitTo: { mode: 'original' }, font: { loadSystemFonts: true } });
+});
+
+test('d2 PNG rasterizes the compiled svg as well', async () => {
+  const source = path.join(WORK, 'checkout.d2');
+  const fsx = makeFs({ [source]: 'a -> b' });
+  const calls = [];
+  const result = await executeRender(RENDERERS.d2, {
+    dir: DIR,
+    source,
+    format: 'png',
+    fsx,
+    run: noSpawn,
+    load: pngLoader(calls),
+  });
+  assert.deepEqual(result, {
+    outputs: [path.join(WORK, 'checkout.png')],
+    engine: 'd2',
+    nop: null,
+    rasterized: 'resvg',
+  });
+  assert.ok(calls.some((call) => call.name === '@resvg/resvg-js'));
+});
+
+test('a PNG request names the rasterizer when it is not installed', async () => {
+  const source = path.join(WORK, 'context.dot');
+  const fsx = makeFs({ [source]: 'digraph {}' });
+  const load = async (dir, name) => {
+    if (name === '@resvg/resvg-js') throw new Error('Cannot find module @resvg/resvg-js');
+    return { Graphviz: { load: async () => ({ layout: () => '<svg/>' }) } };
+  };
+  await assert.rejects(
+    executeRender(RENDERERS.graphviz, { dir: DIR, source, format: 'png', fsx, run: noSpawn, load }),
+    /PNG output needs the resvg rasterizer[\s\S]*ensure resvg/,
+  );
+});
+
+test('structurizr renders PNG views through PlantUML', async () => {
+  const source = path.join(WORK, 'workspace.dsl');
+  const unpackDir = path.join(DIR, RENDERERS.structurizr.unpack.dir);
+  const structurizrJar = path.join(unpackDir, 'lib', 'structurizr-cli.jar');
+  const plantumlJar = path.join(DIR, 'bin', 'plantuml.jar');
+  const fsx = makeFs({
+    [source]: 'workspace {}',
+    [structurizrJar]: 'jar bytes',
+    [plantumlJar]: 'jar bytes',
+  });
+  const calls = [];
+  const run = (command, args) => {
+    calls.push({ command, args });
+    if (args.includes('validate')) return { status: 0 };
+    if (args.includes('export')) {
+      fsx.writeFileSync(path.join(args[args.indexOf('-o') + 1], 'context.puml'), '@startuml');
+      return { status: 0 };
+    }
+    const outDir = args[args.indexOf('-o') + 1];
+    const sourceFile = args[args.length - 1];
+    fsx.writeFileSync(path.join(outDir, `${path.parse(sourceFile).name}.png`), 'PNGDATA');
+    return { status: 0 };
+  };
+
+  const result = await executeRender(RENDERERS.structurizr, {
+    dir: DIR,
+    source,
+    format: 'png',
+    fsx,
+    run,
+    platform: 'linux',
+  });
+  assert.deepEqual(result.outputs, [path.join(WORK, 'context.png')]);
+  const plantumlCall = calls.find((call) => call.command === 'java' && call.args[0] === '-jar');
+  assert.deepEqual(plantumlCall.args, [
+    '-jar',
+    plantumlJar,
+    '-tpng',
+    '-o',
+    WORK,
+    path.join(WORK, '.structurizr-export', 'context.puml'),
+  ]);
 });
 
 test('mermaid spawns mmdc and adds a transparent background for png', async () => {

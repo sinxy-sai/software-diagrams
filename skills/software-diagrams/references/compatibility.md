@@ -31,11 +31,12 @@ resolves to a repository-level path.
 | Linux | same; `unzip` for the Structurizr archive | same |
 | WSL | same as Linux, used inside WSL | same |
 
-Mermaid, draw.io, D2, and Graphviz need only Node. PlantUML and Structurizr also
-need Java 17+; `doctor` prints the detected Java version and reports both as
-`blocked` when it is missing or too old.
+Mermaid, draw.io, D2, Graphviz, and the `resvg` PNG rasterizer need only Node.
+PlantUML and Structurizr also need Java 17+; `doctor` prints the detected Java
+version and reports both as `blocked` when it is missing or too old.
 
-Native `d2` and `dot` binaries are never required.
+Native `d2` and `dot` binaries are never required. `resvg` ships a prebuilt
+native module, so PNG output needs no compiler and no browser.
 
 ## Where renderers live
 

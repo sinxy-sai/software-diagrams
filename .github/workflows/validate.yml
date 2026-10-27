@@ -67,13 +67,21 @@ jobs:
         run: node skills/software-diagrams/scripts/sd.mjs doctor
 
       - name: Install Graphviz and D2
-        run: node skills/software-diagrams/scripts/sd.mjs ensure graphviz d2
+        run: node skills/software-diagrams/scripts/sd.mjs ensure graphviz d2 resvg
 
       # Fidelity mode is the redraw contract: neato honours the explicit pos
       # attributes instead of re-laying the graph out. This source is the
       # fixed-position reference figure.
       - name: Render a fixed-position source with --fidelity
         run: node skills/software-diagrams/scripts/sd.mjs render docs/diagrams/sources/transformer.dot --fidelity -o docs/diagrams/rendered/transformer.svg
+
+      - name: Render the fixed-position source to PNG
+        run: node skills/software-diagrams/scripts/sd.mjs render docs/diagrams/sources/transformer.dot --fidelity --format png -o ${{ runner.temp }}/transformer.png
+
+      # The visual gate that can run without a human: cropped output, text
+      # overflow, tiny type, contrast, overlap.
+      - name: Lint the rendered SVG
+        run: node skills/software-diagrams/scripts/sd.mjs lint docs/diagrams/rendered/transformer.svg --strict
 
       - name: Render Graphviz source
         run: node skills/software-diagrams/scripts/sd.mjs render examples/shop/sources/graphviz-dependencies.dot -o examples/shop/rendered/graphviz-dependencies.svg
