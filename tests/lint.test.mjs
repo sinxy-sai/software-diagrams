@@ -25,7 +25,7 @@ test('parses nested groups, comments, CDATA, PIs and all attribute quoting style
 <svg viewBox='0 0 50 50' xmlns="http://www.w3.org/2000/svg">
   <!-- another comment -->
   <g transform=translate(1,1)>
-    <rect x=1 y=1 width='2' height="2" />
+    <rect x=1 y=1 width='2' height="2" data-note="a > b" />
   </g>
   <![CDATA[raw text with <text> inside]]>
   <?pi data?>

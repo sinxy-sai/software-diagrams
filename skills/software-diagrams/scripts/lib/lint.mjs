@@ -28,7 +28,7 @@ function decodeEntities(text) {
   });
 }
 // Non-greedy tokens; text between them is decoded as character data.
-const TOKEN_RE = /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!doctype[^>]*>|<\/?[A-Za-z_][^>]*>/gi;
+const TOKEN_RE = /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!doctype[^>]*>|<\/?[A-Za-z_](?:"[^"]*"|'[^']*'|[^"'>])*>/gi;
 const ATTR_RE = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 function parseAttributes(body) {
   const attrs = {};
